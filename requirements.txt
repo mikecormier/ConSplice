@@ -1,0 +1,9 @@
+cyvcf2
+ggd
+interlap
+numpy
+pandas
+pyfaidx
+pyranges
+pysam
+scipy
