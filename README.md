@@ -1,6 +1,6 @@
 # ConSplice CLI
 
-The Constraint Splicing (ConSplice) python module command line interface (CLI)
+The Constrained Splicing (ConSplice) python module command line interface (CLI)
 
 ## Summary 
 
