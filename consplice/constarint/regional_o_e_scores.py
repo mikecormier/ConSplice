@@ -17,7 +17,8 @@ import datetime
 from pyfaidx import Fasta
 import time
 from math import ceil, floor
-from .utils import (create_interlap_from_ggd_pkg,
+from .utils import (load_config,
+                   create_interlap_from_ggd_pkg,
                    correct_allele_by_strand, 
                    expand_gene_dict_with_alt_symbols, 
                    get_alternative_gene_symbols, 
@@ -30,14 +31,6 @@ from .utils import (create_interlap_from_ggd_pkg,
 #---------------------------------------------------------------------------------------------------------------------------------
 ## Global Vars
 #---------------------------------------------------------------------------------------------------------------------------------
-delta_score_bins = ["0.0-0.01",
-                    "0.01-0.05",
-                    "0.05-0.1",
-                    "0.1-0.25",
-                    "0.25-0.5",
-                    "0.5-1.0",
-                    "1.0-1.75",
-                    "1.75-4.0"]
 
 
 ## Log files
@@ -52,11 +45,12 @@ out_log_file = file_date + "regional_o_and_e_scores.OUT.log"
 def add_regional_o_e(sub_p):
 
 
-
     p = sub_p.add_parser("regional-oe",
                          help = "Calculate Observed and Expected splicing variant counts for intragenic regions of genes",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description = ("\n\t***************************\n\t* Regional O and E Scores *\n\t***************************\n\n"
+                         description = ("\n\t***************************\n"
+                                        "\t* Regional O and E Scores *\n"
+                                        "\t***************************\n\n"
                                         "\tCalculate Observed splicing variation from gnomAD and"
                                         "\n\tExpected splicing variation using a Substitution"
                                         "\n\tmatrix for intragenic regions of genes with a user" 
@@ -189,6 +183,12 @@ def add_regional_o_e(sub_p):
         help = "The cutoff score to use for seg dups or self chain repeats. Regions of a gene with a seg dup or self chain at or above this cutoff will be skipped while regions of a gene below this cutoff will not be skipped during O and E score calculations. (Default = 0.95, meaning 95 percent. The score will be 0.95 for seg dups and 95.0 for self chains)"
     )
 
+    p.add_argument(
+        "--spliceai-score-type",
+        choices = ["max","sum"],
+        default = "sum",
+        help = "(Optional) How to use the SpliceAI score. Choices = 'max' or 'sum'. 'max' will use the max SpliceAI score for a specific variant. 'sum' will use the sum SpliceAI score for a specific variant. Defulat = 'sum'"
+    )
 
     p.set_defaults(func=regional_o_e)
 
@@ -612,6 +612,10 @@ def get_gnomad_vars_by_position(vcf,
         var_symbols = []
         for csq in vep_annotations:
 
+            ## Skip csq entries that are missing the SYMBOL key
+            if "SYMBOL" not in csq:
+                continue
+
             ## Check for matching Symbols 
             if csq["SYMBOL"] in spliceai_region_dict[pos][ref][alt].keys() or csq["SYMBOL"] in { alt_symbol for symbol in spliceai_region_dict[pos][ref][alt].keys() if symbol in alt_symbol_dict for alt_symbol in alt_symbol_dict[symbol] }:
                 found = True
@@ -788,6 +792,8 @@ def get_gnomad_vars_by_position(vcf,
 #---------------------------------------------------------------------------------------------------------------------------------
 
 def regional_o_e(parser, args):
+    global delta_score_bins 
+    global GENOME_BUILD
 
 
     print("\n\n\t***************************")
@@ -795,7 +801,6 @@ def regional_o_e(parser, args):
     print("\t***************************\n\n")
 
     start_time = time.time()
-    args = arguments()
 
     if args.chrom == None:
         args.chrom = ["All"]
@@ -810,6 +815,7 @@ def regional_o_e(parser, args):
 
     print(("\nInput Arguments:"
            "\n================"
+           "\n - config-path:          {}"
            "\n - gnomad-vcf:           {}"
            "\n - coverage:             {}"
            "\n - gtf-file:             {}"
@@ -827,7 +833,9 @@ def regional_o_e(parser, args):
            "\n - coverage-label:       {}"
            "\n - n-cpu:                {}"
            "\n - repeat-score-cutoff   {}"
-           ).format(args.gnomad_vcf, 
+           "\n - spliceai-score-type:  {}"
+           ).format(args.config_path,
+                    args.gnomad_vcf, 
                     args.coverage, 
                     args.gtf_file, 
                     args.spliceai_vcf, 
@@ -843,9 +851,25 @@ def regional_o_e(parser, args):
                     args.cc, 
                     args.coverage_label,
                     args.n_cpu,
-                    args.repeat_score_cutoff
+                    args.repeat_score_cutoff,
+                    args.spliceai_score_type,
                     )
     )
+
+    ## Load global config
+    config_dict = load_config(args.config_path)
+
+    ## set global variables from config
+    GENOME_BUILD = config_dict["GENOME_BUILD"]
+
+    if args.spliceai_score_type == "max":
+        delta_score_bins = config_dict["score_bins"]["max_spliceai_score_bins"]
+
+    elif args.spliceai_score_type == "sum":
+        delta_score_bins = config_dict["score_bins"]["sum_spliceai_score_bins"]  
+
+    print("\n  SpliceAI score bins:\n  --------------------\n\t- {}".format("\n\t- ".join(delta_score_bins)))
+
 
     ## Check coverage cutoff value
     if args.cc > 1.0 or args.cc < 0.0: 
@@ -1172,10 +1196,19 @@ def regional_o_e(parser, args):
             multi_ref_pos = set()
             for i,spliceai_var in enumerate(spliceai_vcf("{}:{}-{}".format(chrom,start,end))):
 
+                try:
+                    ## Skip PAR regions
+                    if (chrom == "X" or chrom == "chrX") and in_par(config_dict["PAR"][GENOME_BUILD], spliceai_var.POS):
+                        continue
+                except ValueError as e:
+                    print("!!ERROR!! position outside of PAR and NonPAR regions of the X chromosome. BAD POS = {}".format(spliceai_var.POS))
+                    print(str(e))
+                    sys.exit(1)
+
                 ## Get the spliceai annotation as a dict
                 spliceai_annotation = dict(zip(spliceai_info_index, spliceai_var.INFO["SpliceAI"].strip().split("|")))
 
-               ## Check for the correct strand
+                ## Check for the correct strand
                 if spliceai_annotation["SYMBOL"] in gene_strand_dict:
                     if gene_strand_dict[spliceai_annotation["SYMBOL"]]["strand"] != strand:
                         ## Skip this varriant if it is on the wrong strand
