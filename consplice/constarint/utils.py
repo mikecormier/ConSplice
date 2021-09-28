@@ -466,8 +466,3 @@ def create_interlap_from_ggd_pkg(file_path, zero_based = True, set_cutoff = Fals
 
     return(interlap_dict)
 
-
-if __name__ == "__main__":
-
-    import doctest
-    doctest.testmod()
