@@ -1,7 +1,8 @@
 import argparse
 import sys
+import os
 
-from .__init__ import __version__
+from .__init__ import __version__, __cur_path__
 from .ML.rf_training import add_training
 from .ML.rf_scoring import add_ml_scoring
 from .constarint.create_substitution_matrix import add_substitution_matrix
@@ -43,6 +44,12 @@ def main(args=None):
         help = "Installed ConSplice CLI Version",
         action="version",
          version="%(prog)s v" + str(__version__),
+    )
+
+    parser.add_argument(
+        "--config-path",
+        default = os.path.join(os.path.dirname(str(__cur_path__)), "../config/config.yml"),
+        help = "(constraint subcommand only) File path to the new ConSplice config yaml file. By default, ConSplice CLI will use the default ConSplice config.yml file",
     )
 
     ## 1st lay sub command
