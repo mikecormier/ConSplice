@@ -85,7 +85,7 @@ This recipe downloads and formats the altnerative gene symbol file for use with 
 
 ## GGD Data Recipes
 
-All other recipes used by ConSplice are available throuhg [GGD>](https://gogetdata.github.io/). The GGD cli should be used to donwload and use these data files.
+All other recipes used by ConSplice are available throuhg [GGD](https://gogetdata.github.io/). The GGD cli should be used to donwload and use these data files.
 
 
 ### GGD recipe list:
