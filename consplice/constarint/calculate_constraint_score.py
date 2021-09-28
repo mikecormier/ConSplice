@@ -8,28 +8,27 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 from collections import defaultdict
+from .utils import load_config
 
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
 ## Global Vars
 #---------------------------------------------------------------------------------------------------------------------------------
-delta_score_bins = ["0.0-0.01",
-                    "0.01-0.05",
-                    "0.05-0.1",
-                    "0.1-0.25",
-                    "0.25-0.5",
-                    "0.5-1.0",
-                    "1.0-1.75",
-                    "1.75-4.0"]
-
-by_ref_delta_score_bins = ["{}_{}".format(x,y) for x in delta_score_bins for y in ["A","C","G","T"]]
-
 recovery_choices = [round(x, 2) for x in np.arange(0.0,1.01,0.01)] 
 
-allowed_weight_classes = ["unweighted","linear","PHRED","One_minus_proportion","One_over_proportion","One_over_mutation_rate"]
+def set_global_vars():
 
-o_over_e_col = ["Unweighted_O_over_E","Linear_Weighted_O_over_E","PHRED_Weighted_O_over_E","One_minus_prop_Weighted_O_over_E","One_over_prop_Weighted_O_over_E","One_over_mr_Weighted_O_over_E"]
+    global by_ref_delta_score_bins 
+    global allowed_weight_classes 
+    global o_over_e_col 
+
+    by_ref_delta_score_bins = ["{}_{}".format(x,y) for x in delta_score_bins for y in ["A","C","G","T"]]
+
+    allowed_weight_classes = ["unweighted","linear","PHRED","One_minus_proportion","One_over_proportion","One_over_mutation_rate"]
+
+    o_over_e_col = ["Unweighted_O_over_E","Linear_Weighted_O_over_E","PHRED_Weighted_O_over_E","One_minus_prop_Weighted_O_over_E","One_over_prop_Weighted_O_over_E","One_over_mr_Weighted_O_over_E"]
+
 
 #---------------------------------------------------------------------------------------------------------------------------------
 ## Argument Parser
@@ -98,6 +97,13 @@ def add_constraint_scores(sub_p):
         "--sort-by-pos",
         action="store_true",
         help="If the `--sort-by-pos` argument is set, the output file will be sorted by the chromosome and genomic positions. If this argument is not set then the output will be sorted by increasing percentile score. (Default = sort by increasing percentile score)"
+    )
+
+    p.add_argument(
+        "--spliceai-score-type",
+        choices = ["max","sum"],
+        default = "sum",
+        help = "(Optional) How to use the SpliceAI score. Choices = 'max' or 'sum'. 'max' will use the max SpliceAI score for a specific variant. 'sum' will use the sum SpliceAI score for a specific variant. Defulat = 'sum'"
     )
 
     p.set_defaults(func=constraint_scores)
@@ -383,6 +389,7 @@ def get_weights(mutation_table):
 #---------------------------------------------------------------------------------------------------------------------------------
 
 def constraint_scores(parser, args):
+    global delta_score_bins 
 
     print("\n\n\t*****************************************")
     print("\t* O/E and Percentile Constraint Scoring *")
@@ -391,6 +398,7 @@ def constraint_scores(parser, args):
 
     print(("\nInput Arguments:"
            "\n================"
+           "\n - config-path:              {}"
            "\n - o-and-e-scores:           {}"
            "\n - mutation-table            {}" 
            "\n - out-file:                 {}"
@@ -398,17 +406,35 @@ def constraint_scores(parser, args):
            "\n - remove-duplicate:         {}"
            "\n - pct-col-name:             {}"
            "\n - sort-by-pos:              {}"
+           "\n - spliceai-score-type:      {}"
 
            "\n"
-           ).format(args.o_and_e_scores, 
+           ).format(args.config_path,
+                    args.o_and_e_scores, 
                     args.mutation_table,
                     args.out_file,
                     args.pct_rec_rate,
                     args.remove_duplicate,
                     args.pct_col_name,
                     "Output will be sorted by genomic positions" if args.sort_by_pos else "Output will be sorted by increasing percentile",
+                    args.spliceai_score_type,
                     )
     )
+
+
+    ## Load global config
+    config_dict = load_config(args.config_path)
+
+    ## set global variables from config
+    if args.spliceai_score_type == "max":
+        delta_score_bins = config_dict["score_bins"]["max_spliceai_score_bins"]
+
+    elif args.spliceai_score_type == "sum":
+        delta_score_bins = config_dict["score_bins"]["sum_spliceai_score_bins"]  
+
+    set_global_vars()
+
+    print("\n  SpliceAI score bins:\n  --------------------\n\t- {}".format("\n\t- ".join(delta_score_bins)))
 
     ## Get different weights 
     print("\nCalculating  weights to use for O/E scoring")
@@ -467,8 +493,8 @@ def constraint_scores(parser, args):
 
         ## Add scores to score_dict. Only include the score columns
         dict_key = "{}:{}-{}:{}".format(line_dict["chrom"],
-                                        line_dict["region_start"],
-                                        line_dict["region_end"],
+                                        line_dict["region_start"] if "region_start" in line_dict else line_dict["txStart"],
+                                        line_dict["region_end"] if "region_end" in line_dict else line_dict["txEnd"],
                                         line_dict["gene_id"]) 
 
         score_dict[dict_key] = {key:value for key,value in line_dict.items() if key in o_over_e_col}
@@ -571,8 +597,8 @@ def constraint_scores(parser, args):
             line_dict = dict(zip(header,line_list))
 
             dict_key = "{}:{}-{}:{}".format(line_dict["chrom"],
-                                            line_dict["region_start"],
-                                            line_dict["region_end"],
+                                            line_dict["region_start"] if "region_start" in line_dict else line_dict["txStart"],
+                                            line_dict["region_end"] if "region_end" in line_dict else line_dict["txEnd"],
                                             line_dict["gene_id"]) 
             
             ## Skip bad keys
