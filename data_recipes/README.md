@@ -90,17 +90,17 @@ All other recipes used by ConSplice are available throuhg [GGD](https://gogetdat
 
 ### GGD recipe list:
 
-  - grch38-chrom-mapping-ucsc2ensembl-ncbi-v1  (This recipe is used to support the processing of other recipes listed above)
+  - `grch38-chrom-mapping-ucsc2ensembl-ncbi-v1`  (This recipe is used to support the processing of other recipes listed above)
 
-  - grch38-reference-genome-gencode-v1 
+  - `grch38-reference-genome-gencode-v1` 
     
     This reference genome comes bgzipped. To improve speed, we recommend decompressing the file prior to using it with ConSplice
 
-  - grch38-canonical-transcript-features-gencode-v1
+  - `grch38-canonical-transcript-features-gencode-v1`
 
-  - grch38-segmental-dups-ucsc-v1
+  - `grch38-segmental-dups-ucsc-v1`
 
-  - grch38-self-chain-ucsc-v1
+  - `grch38-self-chain-ucsc-v1`
 
 
 
