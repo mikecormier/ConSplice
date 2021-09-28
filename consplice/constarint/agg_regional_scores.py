@@ -260,7 +260,6 @@ def agg_overlapping_regions(parser, args):
     print("\t* Aggregate Overlapping Region Scores *")
     print("\t***************************************\n\n")
 
-    args = arguments()
 
     print(("\nInput Arguments:"
            "\n================"
