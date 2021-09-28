@@ -3,7 +3,118 @@ import sys
 import io
 import os
 import gzip
+import yaml
 from collections import defaultdict
+
+
+
+
+
+def load_config(path):
+    """
+    load_config
+    ===========
+    This method is used to load the internal (or user supplied) config yaml file used for data processing.
+
+    Parameters:
+    -----------
+    1) path: (str) The file path to the config file to load
+
+    Returns:
+    ++++++++
+    1) The loaded config file as a dict.
+    """
+    
+    print("\nLoading config file")
+    assert os.path.exists(path), "\n!!ERROR!! The config.yml path does not exists. Please fix the problem and try again. Bad file path = '{}'".format(path)
+    assert os.path.isfile(path), "\n!!ERROR!! The config.yml path does not exists. Please fix the problem and try again. Bad file path = '{}'".format(path)
+
+    yaml_dict = dict()
+    with open(path) as fh:
+        yaml_dict = yaml.safe_load(fh)
+
+    if check_config(yaml_dict):
+        return(yaml_dict)
+
+    else:
+        return({})
+
+
+def check_config(config_dict):
+    """
+    check_config
+    ============
+    This method is used to check that the config file is formatted correctly. 
+
+    Parameters:
+    -----------
+    1) config_dict: (dict) The config yaml file loaded as a dictionary 
+
+    Returns:
+    ++++++++
+    1) True (bool) If formated correctly, otherwise it raises an assertion error
+    """
+    
+    print("\nChecking config file")
+
+    ## GENOME BUILD section
+    assert "GENOME_BUILD" in config_dict, "!!ERROR!! the 'GENOME_BUILD' key is missing from the config file."
+
+    assert config_dict["GENOME_BUILD"] in ["GRCh37","GRCh38"], "!!ERROR!! only GRCh37 or GRCh38 are allowed for the 'GENOME_BUILD' section of the config file."
+
+
+    ## Score bin section
+    assert "SCORE_BINS" in config_dict, "!!ERROR!! the 'SCORE_BINS' key is missing from the config file"
+    
+    assert "sum_spliceai_score_bins" in config_dict["SCORE_BINS"], "!!ERROR!! the 'sum_spliceai_score_bins' key is missing from the SCORE_BINS section of the config file"
+    assert "max_spliceai_score_bins" in config_dict["SCORE_BINS"], "!!ERROR!! the 'sum_spliceai_score_bins' key is missing from the SCORE_BINS section of the config file"
+
+    assert isinstance(config_dict["SCORE_BINS"]["sum_spliceai_score_bins"], list), "!!ERROR!! the 'sum_spliceai_score_bins' in the 'SCORE_BINS' section should be formatted as a list. Please fix the error"
+    assert isinstance(config_dict["SCORE_BINS"]["max_spliceai_score_bins"], list), "!!ERROR!! the 'max_spliceai_score_bins' in the 'SCORE_BINS' section should be formatted as a list. Please fix the error"
+
+    ## PAR Section 
+    assert "PAR" in config_dict, "!!ERROR!! the 'PAR' key is missing from the config file"
+
+    for gb in ["GRCh37","GRCh38"]:
+        assert gb in config_dict["PAR"], "!!ERROR!! The '{}' key is missing from the 'PAR' section of the config file".format(gb)
+
+        for par_key in ["NOTE","X_PAR1","X_PAR2","X_NONPAR"]:
+            assert par_key in config_dict["PAR"][gb], "!!ERROR!! The '{}' key is missing from the '{}' section of the 'PAR' section in the config file".format(par_key, gb)
+    
+            if par_key in ["X_PAR1", "X_PAR2", "X_NONPAR"]: 
+                assert isinstance(config_dict["PAR"][gb][par_key]["start"], int), "!!ERROR!! The start position in the 'PAR' section needs to be an int"
+                assert isinstance(config_dict["PAR"][gb][par_key]["end"], int), "!!ERROR!! The end position in the 'PAR' section needs to be an int"
+
+
+    return(True)
+
+
+def in_par(par_dict, pos):
+    """
+    in_par
+    =====
+    This method is used to check that a X chromosome position is in the pseudoautosomal region (PAR) or not. 
+     It uses the PAR region information for the config file to identify if the position is in the PAR or not. 
+     This method expects the 'PAR' dict from the config file. (Example: config_dict['PAR']['GRCh38'])
+
+    Parameters:
+    -----------
+    1) par_dict: (dict) A genome build specific dictionary from the PAR section of the config file. 
+    2) pos:      (int)  The X chromosome position to evaluate
+
+    Returns:
+    ++++++++
+    1) True (bool) if the position is in the PAR, False if in the NonPAR region, ValueError otherwise
+    """
+    
+    if pos > par_dict["X_PAR1"]["start"] and pos <= par_dict["X_PAR1"]["end"]:
+        return(True)
+    elif pos > par_dict["X_PAR2"]["start"] and pos <= par_dict["X_PAR2"]["end"]:
+        return(True)
+    elif pos > par_dict["X_NONPAR"]["start"] and pos <= par_dict["X_NONPAR"]["end"]:
+        return(False)
+    else:
+        raise ValueError("Within gene position outside of X chromosome")
 
 
 def correct_allele_by_strand(strand,allele):
