@@ -7,3 +7,7 @@ pyfaidx
 pyranges
 pysam
 scipy
+pyyaml
+gsort
+bcftools
+htslib
