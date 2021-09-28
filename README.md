@@ -29,10 +29,27 @@ The ConSplice module:
   4) Transformed O/E scores into percentiles ranges from 0.0 to 1.0. A percentile score of 0.0 suggests the region is completely unconstrained (tolerant) against aberrant splicing while a percentile score of 1.0 suggest the region is completely constrained (intolerant) against aberrant splicing.  
 
 
-### Ensembl Machine Learning Approach
+### Ensemble Machine Learning Approach
 
-ConSpliceML is a machine learning approach using the ConSplice constraint score with predicted splicing from SpliceAI and SQUIRLS to identify potential pathogenic alternative splicing  variants.
+ConSpliceML is a machine learning approach using the ConSplice constraint score with predicted splicing from SpliceAI and SQUIRLS to identify potential pathogenic alternative splicing variants.
 
+The intuition behind this model is based on improving the interpritation of pathogenic splicing using the splicing constraint metric. By combining a per-nucleotide prediction of alternative splicing with the 
+pathogenic interpritation model of constraint, we can improve both the identification and interpritation of alternative splicing variants in terms of rare disease. 
+
+Both SpliceAI and SQUIRLS are used to support alternative splicing predictions, as well as identify alternative splicing events missed by one of the tools. 
 
 
 ## ConSplice Module 
+
+
+
+
+
+## Data used by ConSplice
+
+ConSplice requires multiple sources of data including gnomAD, SpliceAI, GENCODE, and others. Data curation scripts called *Data Recipes* have been created for transperancy and reproducability. 
+
+Data recipes can be found in the `data_recipes` directory of this repository. 
+
+
+## Running ConSplice
