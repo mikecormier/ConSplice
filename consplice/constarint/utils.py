@@ -4,6 +4,8 @@ import io
 import os
 import gzip
 import yaml
+import numpy as np
+import pyranges as pr
 from collections import defaultdict
 
 
@@ -25,7 +27,7 @@ def load_config(path):
     1) The loaded config file as a dict.
     """
     
-    print("\nLoading config file")
+    print("\n\tLoading config file")
     assert os.path.exists(path), "\n!!ERROR!! The config.yml path does not exists. Please fix the problem and try again. Bad file path = '{}'".format(path)
     assert os.path.isfile(path), "\n!!ERROR!! The config.yml path does not exists. Please fix the problem and try again. Bad file path = '{}'".format(path)
 
@@ -55,7 +57,7 @@ def check_config(config_dict):
     1) True (bool) If formated correctly, otherwise it raises an assertion error
     """
     
-    print("\nChecking config file")
+    print("\n\tChecking config file")
 
     ## GENOME BUILD section
     assert "GENOME_BUILD" in config_dict, "!!ERROR!! the 'GENOME_BUILD' key is missing from the config file."
@@ -85,6 +87,12 @@ def check_config(config_dict):
                 assert isinstance(config_dict["PAR"][gb][par_key]["start"], int), "!!ERROR!! The start position in the 'PAR' section needs to be an int"
                 assert isinstance(config_dict["PAR"][gb][par_key]["end"], int), "!!ERROR!! The end position in the 'PAR' section needs to be an int"
 
+    ## LOG Section
+    assert "LOG_FILES" in config_dict, "!!ERROR!! The 'LOG_FILES' key is missing from the config file"
+
+    assert "error_log" in config_dict["LOG_FILES"], "!!ERROR!! The 'error_log' key is required in the LOG_FILES section of the config file" 
+
+    assert "out_log" in config_dict["LOG_FILES"], "!!ERROR!! The 'out_log' key is required in the LOG_FILES section of the config file" 
 
     return(True)
 
@@ -115,6 +123,139 @@ def in_par(par_dict, pos):
         return(False)
     else:
         raise ValueError("Within gene position outside of X chromosome")
+
+
+def create_pr_par(chrom, par_dict):
+    """
+    create_pr_par
+    =============
+    Method to create a pyranges object of the PAR regions on the X chromosome.
+
+    Parameters:
+    -----------
+    1) chrom:     (str) The Chromosome to use. (NOTE: Should be the "X" chromosome"
+    2) par_dict: (dict) The genome build specific PAR dict. (NOTE: This should be from the ConSplice config file)
+
+    Returns:
+    ++++++++
+    1) (Pyranges Object): A pyranges object of the PAR regions on the X Chromosome.
+    """
+    
+    ## Create a pyranges PAR object
+    par_pr = pr.from_dict({"Chromosome": [chrom.replace("chr",""),chrom.replace("chr","")], 
+                           "Start":[par_dict["X_PAR1"]["start"], 
+                                    par_dict["X_PAR2"]["start"]],
+                           "End":[par_dict["X_PAR1"]["end"], 
+                                  par_dict["X_PAR2"]["end"]]
+                        })
+
+    return(par_pr)
+
+
+def check_xchrom_par(chrom, region_start, region_end, par_pr):
+    """
+    check_xchrom_par
+    ================
+    Method to filter regions that are in the PAR regions of the X chromsome. A region that is overlapped by the PAR region 
+     will be filtered to the portion of the region not in the PAR region. If the entire region is wihtin the PAR region 
+     there will be no region returned. 
+
+    Parameters:
+    -----------
+    1) chrom: (str) The chromsome of the region 
+    2) region_start: (int) The start position of the region 
+    3) region_end: (int) The end position of the region
+    4) par_pr: (pyranges object) A PAR pyranges object with the PAR regions loaded in
+
+    Returns:
+    ++++++++
+    1) (numpy 2d array): A numpy 2d array 
+
+    1) (2d numpy array) A 2d numpy array where each inner array represents a start and end position of the region not overlapped
+                         by the X chromosome PAR region. (Inner array index: 0 = start, 1 = end)
+
+    """
+    
+    ## Create region pyranges object
+    region_pr = pr.from_dict({"Chromosome": [chrom.replace("chr","")], "Start": [region_start], "End": [region_end]})
+
+    ## Get the portion of the region that does not overlap the PAR regions
+    ### Subtract the original region from the PAR regions on the X chromsome. Convert to a df, convert non PAR start and end positions into 2d numpy array.
+    ### If the substraction result is empty, meaining the PAR region is larger than the region of interset, an emtpy numpy 2d array will be returned
+    subt_results = region_pr.subtract(par_pr)
+
+    ## Count the number of bases in the PAR region
+    total_non_par = subt_results.df.apply(lambda x: x.End - x.Start, axis = 1).sum() + 1 if not subt_results.df.empty else 0 
+    total_par = region_end - region_start + 1
+    diff = total_par - total_non_par
+
+    non_par_regions = np.array([[]]) if subt_results.empty else subt_results.df[["Start","End"]].values
+
+    return(non_par_regions, diff)
+
+
+def check_repeats(chrom, start, end, segdup_interlap_dict, selfchain_interlap_dict):
+    """
+    check_repeats
+    =============
+    Method to check if a region intersects a seg dup or self chain repeat region. If repeats exists
+     within the region of interest, the region will be filtered to parts of the region with no repeats. 
+
+    Parameters:
+    -----------
+    1) chrom:                               (str) The chromosome of the current region
+    2) start:                               (int) The start position of the current region
+    3) end:                                 (int) The end position of the current region
+    4) segdup_interlap_dict:    (Interlap Ojbect) An interlap dict for the current chromosome storing seg dup repeat info
+    5) selfchain_interlap_dict: (Interlap Ojbect) An interlap dict for the current chromosome storing self chain repeat info
+
+    Returns:
+    ++++++++
+    1) (2d numpy array) A 2d numpy array where each inner array represents a start and end position of the region not overlapped
+                         by a repeat. (Inner array index: 0 = start, 1 = end)
+    2)            (int) The number of nucleotides/bases of the region covered by repeats. That is, the number of bases that are 
+                         not included in the 2d numpy array
+    """
+
+    ## Get any seg dup or self chain events that intersect with the current region
+    overlapping_sd = list(segdup_interlap_dict.find((start, end))) 
+    overlapping_sc = list(selfchain_interlap_dict.find((start, end)))
+
+    ## Get start and end lists
+    start_list =  [x[0] for x in overlapping_sd] + [y[0] for y in overlapping_sc]
+    end_list =    [x[1] for x in overlapping_sd] + [y[1] for y in overlapping_sc]
+
+    if start_list: ## if repeats, filter out repeat regions
+        
+        ## Add all intersecting repeat regions to a pyrange df.
+        repeat_pr = pr.from_dict({"Chromosome": [chrom] * len(start_list), 
+                                  "Start": start_list,
+                                  "End": end_list,
+                                  })
+
+        ## Get merged repeat regions 
+        merged_pr = repeat_pr.merge()
+
+        ## Get the original regions that don't overlap with the repeats
+        ### Subtract the original region from the merged repeat regions, convert to a df, convert non repeat start and end positions into 2d numpy array.
+        ### If the substraction result is empty, meaining the repeat is larger than the region, an emtpy numpy 2d array will be returned
+        subt_results = pr.from_dict({"Chromosome": [chrom], "Start": [start], "End": [end]}).subtract(merged_pr)
+
+        ## Count the number of bases in the repeat region
+        total_non_repeat = subt_results.df.apply(lambda x: x.End - x.Start, axis = 1).sum() + 1 if not subt_results.df.empty else 0 
+        total_region = end - start + 1
+        diff = total_region - total_non_repeat
+
+        ## get non repeat regions
+        non_repeat_regions = np.array([[]]) if subt_results.empty else subt_results.df[["Start","End"]].values
+
+    else: ## if no repeats, return the original region 
+
+        non_repeat_regions = np.array([[start,end]])
+
+        diff = 0
+
+    return(non_repeat_regions, diff)
 
 
 def correct_allele_by_strand(strand,allele):
@@ -201,6 +342,8 @@ def get_alternative_gene_symbols(gene_info_file):
         synonymous_symbols = set(x for x in line_dict["alias_symbol"].strip().replace("\"","").split("|")) if line_dict["alias_symbol"] else set()
         ## Add any previous symbols 
         synonymous_symbols.update(set(x for x in line_dict["prev_symbol"].strip().replace("\"","").split("|")) if line_dict["prev_symbol"] else set())
+        ## Add current symbol
+        synonymous_symbols.add(gene_symbol)
 
         ## Add to dict 
         alternative_gene_symbols[gene_symbol].update(synonymous_symbols)
