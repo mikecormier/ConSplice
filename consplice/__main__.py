@@ -8,10 +8,12 @@ from .ML.rf_scoring import add_ml_scoring
 from .constarint.create_substitution_matrix import add_substitution_matrix
 from .constarint.regional_o_e_scores import add_regional_o_e
 from .constarint.gene_o_e_scores import add_gene_o_e
+from .constarint.o_e_counts import add_o_e_counts
 from .constarint.calculate_constraint_score import add_constraint_scores
 from .constarint.agg_regional_scores import add_aggregate_overlapping_regions
 from .constarint.select_scores import add_select_score
 from .constarint.convert_to_bed import add_to_bed
+
 
 
 
@@ -103,6 +105,8 @@ def main(args=None):
     add_regional_o_e(sub_con)
 
     add_gene_o_e(sub_con)
+
+    add_o_e_counts(sub_con)
 
     add_constraint_scores(sub_con)
 
