@@ -36,7 +36,7 @@ def set_global_vars():
 
 def add_constraint_scores(sub_p):
 
-    p = sub_p.add_parser("score",
+    p = sub_p.add_parser("score-oe",
                          help = "Calculate the O/E and Percentile constraint scores",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
                          description=("\n\t*****************************************\n"
