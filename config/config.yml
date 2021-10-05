@@ -46,3 +46,6 @@ PAR:
             end: 155701382
 
 
+LOG_FILES:
+    error_log: "ConSplice.ERROR"
+    out_log: "ConSplice.OUT"
