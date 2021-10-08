@@ -5,14 +5,12 @@ import os
 from .__init__ import __version__, __cur_path__
 from .ML.rf_training import add_training
 from .ML.rf_scoring import add_ml_scoring
-from .constarint.create_substitution_matrix import add_substitution_matrix
-from .constarint.regional_o_e_scores import add_regional_o_e
-from .constarint.gene_o_e_scores import add_gene_o_e
-from .constarint.o_e_counts import add_o_e_counts
-from .constarint.calculate_constraint_score import add_constraint_scores
-from .constarint.agg_regional_scores import add_aggregate_overlapping_regions
-from .constarint.select_scores import add_select_score
-from .constarint.convert_to_bed import add_to_bed
+from .constraint.create_substitution_matrix import add_substitution_matrix
+from .constraint.o_e_counts import add_o_e_counts
+from .constraint.calculate_constraint_score import add_constraint_scores
+from .constraint.agg_regional_scores import add_aggregate_overlapping_regions
+from .constraint.select_scores import add_select_score
+from .constraint.convert_to_bed import add_to_bed
 
 
 
@@ -101,10 +99,6 @@ def main(args=None):
     sub_con = con.add_subparsers()
 
     add_substitution_matrix(sub_con)
-
-    add_regional_o_e(sub_con)
-
-    add_gene_o_e(sub_con)
 
     add_o_e_counts(sub_con)
 
