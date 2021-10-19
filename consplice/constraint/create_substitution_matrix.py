@@ -26,7 +26,8 @@ from .utils import (load_config,
                    get_delta_score_bin, 
                    get_max_delta_score, 
                    get_max_sum_delta_score,
-                   output_log)
+                   output_log,
+                   spliceai_scores_by_region)
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -847,14 +848,6 @@ def substitution_matrix(parser, args):
             gnomad_vcf = VCF(args.gnomad_vcf, threads=ncpus)
             prev_chrom = chrom
 
-        ## Get SpliceAI region Info
-        spliceai_position_dict = dict()
-        min_region_start = float("inf")
-        max_region_start = 0
-        prev_pos = -1
-        spliceai_region_list = []
-        multi_ref_pos = set()
-
         ## Check for repeats in the current region
         nonrepeat_regions, repat_count = check_repeats(chrom, 
                                                        start, 
@@ -886,124 +879,23 @@ def substitution_matrix(parser, args):
             nonrepeat_regions = np.concatenate(new_regions) if len(new_regions) > 0 else np.array([[]])
 
 
-        ## Iterate through the non repeat regions
-        for nonrepeat_region in nonrepeat_regions:
-
-            ## if the non repeat region is empty, meaning the entir region was overlapped by a repeat, skip this region
-            if nonrepeat_region.size == 0:
-                continue 
-
-            nr_start = nonrepeat_region[0]
-            nr_end = nonrepeat_region[1]
-            
-            ## Check for SpliceAI variants
-            for i,spliceai_var in enumerate(spliceai_vcf("{}:{}-{}".format(chrom,nr_start,nr_end))):
-
-                ## Get the spliceai annotation as a dict
-                spliceai_annotation = dict(zip(spliceai_info_index, spliceai_var.INFO["SpliceAI"].strip().split("|")))
-
-                ## Check for the correct strand
-                if spliceai_annotation["SYMBOL"] in gene_strand_dict:
-                    if gene_strand_dict[spliceai_annotation["SYMBOL"]]["strand"] != strand:
-                        ## Skip this varriant if it is on the wrong strand
-                        continue
-                else:
-                    ## If the gene name is not in the gene strand dict, where alternative symobls have also been added, skip this site
-                    continue
-
-                
-                ## Add chrom, pos, ref, and alt to the dict
-                spliceai_annotation.update({"chrom":spliceai_var.CHROM, 
-                                             "pos":spliceai_var.POS, 
-                                             "ref":spliceai_var.REF, 
-                                             "alt":spliceai_var.ALT[0]})
-
-
-                ## keep track of position in the region that have SpliceAI annotations
-                ## Track continous regions annotated by spliceai
-                if prev_pos == -1:  
-                    prev_pos = spliceai_var.POS
-
-                ## Continous region tracking
-                if prev_pos == spliceai_var.POS:
-                    pass
-                elif prev_pos + 1 == spliceai_var.POS:
-                    prev_pos = spliceai_var.POS
-                else:
-                    spliceai_region_list.append({"chrom":chrom, "start":min_region_start, "end":max_region_start})
-                    min_region_start = spliceai_var.POS
-                    max_region_start = spliceai_var.POS
-                    prev_pos = spliceai_var.POS
-
-                ## relative min and max
-                if spliceai_var.POS < min_region_start:
-                    min_region_start = spliceai_var.POS
-                if spliceai_var.POS > max_region_start:
-                    max_region_start = spliceai_var.POS
-
-
-                ## Update spliceai position dict
-                if spliceai_var.POS not in spliceai_position_dict:
-                    spliceai_position_dict[spliceai_var.POS] = {spliceai_var.REF:{spliceai_var.ALT[0]:{spliceai_annotation["SYMBOL"]:spliceai_annotation}}}
-
-                else:
-                    ## Check for additional reference alleles. 
-                    if spliceai_var.REF not in spliceai_position_dict[spliceai_var.POS]:
-
-                        ## get ref allele from fasta
-                        fa = Fasta(args.fasta)
-                        fa_ref_allele = fa[spliceai_var.CHROM][spliceai_var.start:spliceai_var.end]
-                        fa.close()
-
-                        ## iterate over each ref alelle for the current position
-                        for ref_allele in list(spliceai_position_dict[spliceai_var.POS].keys()) + [spliceai_var.REF]:
-                            ## if the referenec allele does not match the fasta reference and the key is in the dict, remove it
-                            if ref_allele != fa_ref_allele and ref_allele in spliceai_position_dict[spliceai_var.POS]:
-                                del spliceai_position_dict[spliceai_var.POS][ref_allele]
-                            ## if the reference allele does match, but it is dont in the dict, add it
-                            elif ref_allele == fa_ref_allele and ref_allele not in spliceai_position_dict[spliceai_var.POS]:
-                                ## check if ref is for the current var
-                                if ref_allele == spliceai_var.REF:
-                                    spliceai_position_dict[spliceai_var.POS] = {spliceai_var.REF:{spliceai_var.ALT[0]:{spliceai_annotation["SYMBOL"]:spliceai_annotation}}}
-                            ## if ref allele matches fasta ref allele, and it is already in the dict, add alt allele
-                            elif ref_allele == fa_ref_allele and ref_allele in spliceai_position_dict[spliceai_var.POS]:
-                                ## check if ref is for the current var
-                                if ref_allele == spliceai_var.REF:
-                                    if spliceai_var.ALT[0] not in spliceai_position_dict[spliceai_var.POS][spliceai_var.REF]:
-                                        spliceai_position_dict[spliceai_var.POS][spliceai_var.REF].update({spliceai_var.ALT[0]:{spliceai_annotation["SYMBOL"]:spliceai_annotation}})
-                                    else:
-                                        spliceai_position_dict[spliceai_var.POS][spliceai_var.REF][spliceai_var.ALT[0]].update({spliceai_annotation["SYMBOL"]:spliceai_annotation})
-                                    
-                        ## Add Warning
-                        error = ("\n**WARNING** SpliceAI has multiple reference alleles for a single genomic position. Checking for correct reference allele."
-                                "Genomic Position: {}:{}\n").format(spliceai_var.CHROM, spliceai_var.POS)
-                        if len(spliceai_position_dict[spliceai_var.POS].keys()) < 1:
-                            error += ("No matching ref allele for current position."
-                                      "\n\tSpliceAI Ref Alleles = {}"
-                                      "\n\tFasta Ref Allele = {}").format(",".join(list(spliceai_position_dict[spliceai_var.POS].keys()) + [spliceai_var.REF]), 
-                                                                          fa_ref_allele)
-                        output_log(error,error_log_file)
-                        if spliceai_var.POS not in multi_ref_pos:
-                            pos_with_multiple_refs += 1
-                            multi_ref_pos.add(spliceai_var.POS)
-
-                    ## Add alt alleles 
-                    elif spliceai_var.ALT[0] not in spliceai_position_dict[spliceai_var.POS][spliceai_var.REF]: 
-                        spliceai_position_dict[spliceai_var.POS][spliceai_var.REF].update({spliceai_var.ALT[0]:{spliceai_annotation["SYMBOL"]:spliceai_annotation}})
-
-                    else: ## If multiple genes, add each gene separately
-                        spliceai_position_dict[spliceai_var.POS][spliceai_var.REF][spliceai_var.ALT[0]].update({spliceai_annotation["SYMBOL"]:spliceai_annotation})
-
-        ## Add the last region if it has not been added yet
-        if len(spliceai_region_list) == 0 or {"chrom":chrom, "start":min_region_start, "end":max_region_start} != spliceai_region_list[-1]:
-            spliceai_region_list.append({"chrom":chrom, "start":min_region_start, "end":max_region_start})
-
+        ## Get SpliceAI region Info
+        spliceai_region_list, spliceai_position_dict, multi_ref_pos = spliceai_scores_by_region(region_list = nonrepeat_regions,
+                                                                                                spliceai_vcf = spliceai_vcf,
+                                                                                                spliceai_info_index = spliceai_info_index,
+                                                                                                chrom = chrom,
+                                                                                                gene_name = None,
+                                                                                                strand = strand,
+                                                                                                alt_symbol_dict = alt_symbol_dict,
+                                                                                                gene_strand_dict = gene_strand_dict,
+                                                                                                check_symbol = False,
+                                                                                                fasta_file = args.fasta,
+                                                                                                error_log_file = error_log_file)
 
         ## out log
         stdout_string = ("\nBefore Filtering Region: {}"
                          "\nSpliceAI Filtered Region(s): {}").format(region,spliceai_region_list)
         output_log(stdout_string,out_log_file)
-
 
         ## Iterate over each relateive spliceai continous region
         for relative_spliceai_region in spliceai_region_list:
@@ -1081,4 +973,3 @@ def substitution_matrix(parser, args):
     print("\nWriting mutation count table by reference allele to '{}'".format(args.out_file))
     write_mutation_count_table(mutation_frequency_dict, args.out_file)
     print("\nDONE")
-        
