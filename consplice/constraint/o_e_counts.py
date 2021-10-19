@@ -27,7 +27,8 @@ from .utils import (load_config,
                    get_max_delta_score, 
                    get_max_sum_delta_score,
                    output_log,
-                   spliceai_scores_by_region)
+                   spliceai_scores_by_region,
+                   gnomad_coverage_by_region)
 
 #---------------------------------------------------------------------------------------------------------------------------------
 ## Argument Parser
@@ -1500,10 +1501,11 @@ def o_e_counts(parser, args):
 
                 ## Get a dict of coverage where key = position, value = coverage value
                 ### {POS:COVERAGE,POS:COVERAGE,POS:COVERAGE,...}
-                by_position_coverage_dict = {int(x.strip().split("\t")[cov_header_dict["end"]]):float(x.strip().split("\t")[cov_header_dict[args.coverage_label]])
-                                                for x in cov_file.fetch("chr{}".format(relative_spliceai_region["chrom"]),
-                                                                                                            int(relative_spliceai_region["start"] - 1),
-                                                                                                            int(relative_spliceai_region["end"] + 1))}
+                by_position_coverage_dict = gnomad_coverage_by_region(cov_header_dict = cov_header_dict, 
+                                                                      coverage_label = args.coverage_label, 
+                                                                      cov_file = cov_file, 
+                                                                      region = relative_spliceai_region) 
+
 
                 ## Update mutation frequencies from gnomAD variants
                 (non_matching_ref_alleles, 
