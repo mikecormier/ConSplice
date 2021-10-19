@@ -785,3 +785,31 @@ def spliceai_scores_by_region(region_list,
         spliceai_region_list.append({"chrom":chrom, "start":min_region_start, "end":max_region_start})
 
     return(spliceai_region_list, spliceai_position_dict, multi_ref_pos)
+
+
+def gnomad_coverage_by_region(cov_header_dict, coverage_label, cov_file, region):
+    """
+    gnomad_coverage_by_region
+    =========================
+    Method to get the gnomAD coverage for a genomic region.
+
+    Parameters:
+    -----------
+    1) cov_header_dict: (dict) A dictionary of the header index for the gnomAD coverage file
+    2) coverage_label:   (str) The coverage label to use from the coverage file
+    3) cov_file (Pysam Object) The gnomAD coverage file as a Pysam object
+    4) region           (dict) The region of interest with chrom, start, and end keys
+
+
+    Returns:
+    ++++++++
+    1) (dict) A dictionary with by position coverage information: {POS:COVERAGE,POS:COVERAGE,POS:COVERAGE,...} 
+    """
+
+    ## Create a dictionary of coverage by position
+    by_position_coverage_dict = {int(x.strip().split("\t")[cov_header_dict["end"]]):float(x.strip().split("\t")[cov_header_dict[coverage_label]])
+                                 for x in cov_file.fetch("chr{}".format(region["chrom"]),int(region["start"] - 1),int(region["end"] + 1))}
+
+    return(by_position_coverage_dict)
+
+
