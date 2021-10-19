@@ -624,6 +624,10 @@ def spliceai_scores_by_region(region_list,
                               fasta_file,
                               error_log_file):
     """
+    spliceai_scores_by_region
+    =========================
+    Method to get SpliceAI scores for regions of interest. The method will take each region in the region list and 
+     will identify the continous subregions that have SpliceAI scores. 
 
     Parameters:
     -----------
@@ -638,6 +642,12 @@ def spliceai_scores_by_region(region_list,
     9)  check_symbol:          (bool) True or False, check for a matching gene symbol between SpliceAI and the current region.
     10) fasta_file:             (str) The path to the reference fasta file
     11) error_log_file:         (str) The name of the error log file
+
+    Returns:
+    ++++++++
+    1) (List) A filterd list of regions with spliceai scores 
+    2) (Dict) A dictionary of of SpliceAI score info by position. { Position :{ Ref Allele : { ALT Allele : { Gene Symbol :{ Spliceai Annotation dict }}}}} 
+    3)  (Int) The number of positions with multiple reference alleles
 
 
     """
