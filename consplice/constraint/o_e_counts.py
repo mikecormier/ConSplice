@@ -15,20 +15,7 @@ import multiprocessing
 import datetime
 from pyfaidx import Fasta
 import time
-from .utils import (load_config,
-                   create_pr_par,
-                   check_xchrom_par,
-                   check_repeats,
-                   create_interlap_from_ggd_pkg,
-                   correct_allele_by_strand, 
-                   expand_gene_dict, 
-                   get_alternative_gene_symbols, 
-                   get_delta_score_bin, 
-                   get_max_delta_score, 
-                   get_max_sum_delta_score,
-                   output_log,
-                   spliceai_scores_by_region,
-                   gnomad_coverage_by_region)
+from .utils import *
 
 #---------------------------------------------------------------------------------------------------------------------------------
 ## Argument Parser
@@ -509,7 +496,7 @@ def get_normalized_matrix_per_label(groupby_object, mutation_rate_dict):
     mutation_rate_dict[label]["zeroton_plus_singleton"] = dict(zip(groupby_object.ref.unique(),zeroton_plus_singletons_mutation_rates))
 
 
-def get_gnomad_vars_by_position(vcf,
+def get_by_region_o_e_counts(vcf,
                                 contains_chr,
                                 region_chrom,
                                 region_start,
@@ -528,19 +515,12 @@ def get_gnomad_vars_by_position(vcf,
                                 ref_allele_n,
                                 empty_position_info):
     """
-    get_gnomad_vars_by_position
+    get_by_region_o_e_counts
     ===========================
-    This method is used to get the gnomAD variants between a genomic region (start and end position). Variants at any of the 
-     positions in the region that pass filtering are used as an observed count for a gene at a specific bin. 
-
-    It takes a cyvcf2 object and iterates over ecah varaint that is found between the position interval. Checks are done 
-     for each varaint found to ensure the variant is appropriate. Checks include: 
-        1) If the variant is an SNV. If the variant is not an SNV the variant will be skipped. 
-        2) If the variant has a PASS filter. If the variant does not have a PASS filter the variant is skipped
-        3) If the variant reference allele matches the reference allele anotated in the near splice site being compared
-        4) If the variant has sufficient sequencing coverage. If not, the variant is skipped.
-        5) If the variant is wihtin a transcript that the near splice site position is annotated in. If so, it is kept.
-            if not, the variant is skipped. 
+    This method is used to get observed and expected counts for a given region. it will check for the gnomAD variants 
+     between the genomic region (start and end position). Variants at any of the positions in the region that pass 
+     filtering are used as an observed count for a gene at a specific bin. Expected counts are then added for each 
+     position in the region based on the substitution rate for that position. 
     
     If a variant passes all filters it will be added to the splice region dictionary under the appropriate ref to alt keys, 
      and the splice region label sub-key. 
@@ -556,25 +536,24 @@ def get_gnomad_vars_by_position(vcf,
 
     Parameters:
     -----------
-    1)  vcf:                      (cyvcf2 
-                                  obj)    A cyvcf2 object for the current vcf/bcf file being queried 
+    1)  vcf:                (cyvcf2 obj)  A cyvcf2 object for the current vcf/bcf file being queried 
     2)  contains_chr:             (bool)  whether or not the the sequence names in the vcf start with chr or not
-    3)  region_chrom:             (str)   The chromsome to look in for the position interval 
-    4)  region_start:             (int)   The start position of the interval
-    5)  region_end:               (int)   The end position of the interval
-    6)  region_strand:            (str)   A string representing the strand the gene is on. (+ or -)
+    3)  region_chrom:              (str)  The chromsome to look in for the position interval 
+    4)  region_start:              (int)  The start position of the interval
+    5)  region_end:                (int)  The end position of the interval
+    6)  region_strand:             (str)  A string representing the strand the gene is on. (+ or -)
     7)  by_pos_cov_dict:          (dict)  A dictionary of var coverage for the current region
-    8)  coverage_cutoff:          (float) The coverage value at each position to use as a cutoff from the coverage file. (Between 0.0 and 1.0) 
+    8)  coverage_cutoff:         (float)  The coverage value at each position to use as a cutoff from the coverage file. (Between 0.0 and 1.0) 
     9)  vep_index:                (list)  A list that represents the vep csq index in the gnomad vcf 
     10) spliceai_region_dict:     (dict)  A dictionary of SpliceAI information for the current region 
     11) alt_symbol_dict:          (dict)  A dictionary of different alternative gene symbols 
     12) t_id_dict:                (dict)  A by transcript id dict that tracks the observed and expected scores for each transcript id
-    13) transcript_id:            (str)   The transcript id for the current transcript being investigated
+    13) transcript_id:             (str)  The transcript id for the current transcript being investigated
     14) mut_rate_dict             (dict)  A dictionary that contains the mutation rate information
-    15) non_matching_ref_alleles: (int)   The current count of non matching ref alleles
-    16) non_matching_symobls:     (int)   The current count of non matching symbols
-    17) ref_allele_n:             (int)   The current count of reference alleles that are 'N'
-    18) empty_position_info:      (int)   The current count of positions with null information 
+    15) non_matching_ref_alleles:  (int)  The current count of non matching ref alleles
+    16) non_matching_symobls:      (int)  The current count of non matching symbols
+    17) ref_allele_n:              (int)  The current count of reference alleles that are 'N'
+    18) empty_position_info:       (int)  The current count of positions with null information 
 
 
     Returns:
@@ -613,246 +592,155 @@ def get_gnomad_vars_by_position(vcf,
         else:
             return(second_delta_bin)
 
-
     ## error tracking
-    cur_non_matching_ref_alleles = 0
-    cur_non_matching_symbols = 0
     cur_ref_allele_n = 0
     cur_empty_position_info = 0
     considered_position = set()
     added_var_pos = set()
     per_pos_max_delta_bin = defaultdict(lambda: delta_score_bins[0])
 
-
-    ## Iterate over varaints that are with the same chromosome and position
-    search = "chr{}:{}-{}".format(region_chrom,region_start,region_end) if contains_chr else "{}:{}-{}".format(region_chrom,region_start,region_end)  
-    for var in vcf(search):
-
-        ## Get variant info
-        chrom = var.CHROM
-        pos = var.POS
-        ref = var.REF
-        alt = var.ALT[0]    
-        AC = var.INFO.get("AC")
-        var_filter = var.FILTER if var.FILTER != None else "PASS"
-        zerotons = 0
-        zerotons_plus_singletons = 0
-        singletons = 0
-        non_zerotons = 0
-        non_zerotons_plus_singletons = 0 
-
-        ## Skip non SNVs
-        ### We will only consider SNVs
-        if len(ref) > 1 or len(alt) > 1:
-            continue
-
-        ## Only look at variants with a PASS filter
-        if var_filter != "PASS":
-            continue
-
-        ## Check for matching reference alleles at the current position
-        spliceai_ref_allele = list(spliceai_region_dict[pos].keys()).pop() if pos in spliceai_region_dict and len(spliceai_region_dict[pos].keys()) == 1 else "None" 
-        if str(ref) != str(spliceai_ref_allele):
-            ## Log error
-            different_ref = list(spliceai_region_dict[pos].keys()).pop() if pos in spliceai_region_dict and len(spliceai_region_dict[pos].keys()) == 1 else "None"
-            error = ("\n\n!!ERROR!! REF alleles don't match"
-                     "\nPOSITION: {}"
-                     "\ndiffering REF: {}"
-                     "\nvariant info: {}"
-                     "\ngnomAD varinat will be skipped").format(pos,different_ref, var)
-            output_log(error,error_log_file)
-            non_matching_ref_alleles += 1
-            cur_non_matching_ref_alleles += 1
-
-            continue
-
-        ## Get the position specific coverage
-        ## If position does not have enough sequence coverage, skip it 
-        if float(by_pos_cov_dict[int(pos)]) < coverage_cutoff:
-            continue
-
-        ## Get a list of dictionaries for each vep annotation for the current var. 
-        vep_annotations = [dict(zip(vep_index, x.strip().split("|"))) for x in var.INFO["vep"].strip().split(",")]
-
-        ## Iterate over each vep annotation
-        found = False
-        var_symbols = []
-        for csq in vep_annotations:
-
-            ## Skip csq entries that are missing the SYMBOL key
-            if "SYMBOL" not in csq:
-                continue
-
-            ## Check for matching Symbols 
-            if csq["SYMBOL"] in spliceai_region_dict[pos][ref][alt].keys() or csq["SYMBOL"] in { alt_symbol for symbol in spliceai_region_dict[pos][ref][alt].keys() if symbol in alt_symbol_dict for alt_symbol in alt_symbol_dict[symbol] }:
-                found = True
-                break
-            else:
-                var_symbols.append(csq["SYMBOL"])
-                
-
-        ## If the variant symbol is unable to match with the spliceai, skip it
-        if not found:
-            error = ("\n\n**WARNING** NON matching gene symbols."
-                     "\nPOSITION: {}"
-                     "\n\tSite Gene: {}"
-                     "\n\tVariant Gene: {}"
-                     "\ngnomAD variant will be skipped.").format(pos, ", ".join(spliceai_region_dict[pos][ref][alt].keys()), ", ".join(var_symbols))
-            output_log(error,error_log_file)
-            non_matching_symbols += 1
-            cur_non_matching_symbols += 1
-
-            continue
-
-        ## Get strand corrected alleles
-        strand_corrected_ref = correct_allele_by_strand(region_strand, ref)
-        strand_corrected_alt = correct_allele_by_strand(region_strand, alt)
-
-        ## Get the max/sum of delta score for the current position, reference allele, and alternative allele
-        max_sum_delta_score = (get_max_sum_delta_score(spliceai_region_dict[pos][ref][alt])
-                               if SCORE_TYPE == "sum"
-                               else get_max_delta_score(spliceai_region_dict[pos][ref][alt])
-                               if SCORE_TYPE == "max"
-                               else None)
-
-        if max_sum_delta_score is None:
-            raise ValueError("!!ERROR!! Unrecognized value for the SpliceAI Score Type == '{}'".format(SCORE_TYPE))
-
-        delta_score_bin = get_delta_score_bin(max_sum_delta_score, delta_score_bins)
+    ## Parse gnomad and get a dict of gnomAD varaints that pass all filters
+    (gnomad_var_dict,
+    non_matching_ref_alleles,
+    non_matching_symbols) = parse_gnomad_by_region(region_chrom         = region_chrom,
+                                                   region_start         = region_start,
+                                                   region_end           = region_end,
+                                                   region_strand        = region_strand,
+                                                   contains_chr         = contains_chr,
+                                                   vcf                  = vcf,
+                                                   vep_index            = vep_index, 
+                                                   spliceai_region_dict = spliceai_region_dict,
+                                                   by_pos_cov_dict      = by_pos_cov_dict,
+                                                   coverage_cutoff      = coverage_cutoff,
+                                                   alt_symbol_dict      = alt_symbol_dict,
+                                                   error_log_file       = error_log_file,
+                                                   delta_score_bins     = delta_score_bins,
+                                                   SCORE_TYPE           = SCORE_TYPE)
 
 
-        ## AC type
-        zerotons = 0.0
-        zerotons_plus_singletons = 1.0 if AC <= 1 else 0.0
-        singletons = 1.0 if AC == 1 else 0.0
-        non_zerotons = 1.0 if AC > 0.0 else 0.0
-        non_zerotons_plus_singletons = 1.0 if AC > 1 else 0.0 
-
-        ## Get zeroton and zeroton plus singleton mutation rate for the current delta score bin and ref allele
-        zeroton_mutation_rate = float(mut_rate_dict[delta_score_bin]["zeroton"][strand_corrected_ref])
-        zeroton_plus_singleton_mutation_rate = float(mut_rate_dict[delta_score_bin]["zeroton_plus_singleton"][strand_corrected_ref]) 
-
-
-        ## add ovserved and expected scores
-        ### Observed scores
-        t_id_dict[transcript_id]["zeroton_observed_var_count"] += non_zerotons
-        t_id_dict[transcript_id]["zero_and_singleton_observed_var_count"] += non_zerotons_plus_singletons
-
-        t_id_dict[transcript_id]["{}_zeroton_observed".format(delta_score_bin)] += non_zerotons
-        t_id_dict[transcript_id]["{}_{}_zeroton_observed".format(delta_score_bin,strand_corrected_ref)] += non_zerotons
-        t_id_dict[transcript_id]["{}_zero_and_singleton_observed".format(delta_score_bin)] += non_zerotons_plus_singletons 
-        t_id_dict[transcript_id]["{}_{}_zero_and_singleton_observed".format(delta_score_bin,strand_corrected_ref)] += non_zerotons_plus_singletons 
-
-        ## Expected Scores
-        t_id_dict[transcript_id]["zeroton_expectation_sum"] += float(zeroton_mutation_rate)
-        t_id_dict[transcript_id]["zero_and_singleton_expectation_sum"] += float(zeroton_plus_singleton_mutation_rate)
-
-        t_id_dict[transcript_id]["{}_zeroton_expected".format(delta_score_bin)] += float(zeroton_mutation_rate) 
-        t_id_dict[transcript_id]["{}_{}_zeroton_expected".format(delta_score_bin,strand_corrected_ref)] += float(zeroton_mutation_rate) 
-        t_id_dict[transcript_id]["{}_zero_and_singleton_expected".format(delta_score_bin)] += float(zeroton_plus_singleton_mutation_rate) 
-        t_id_dict[transcript_id]["{}_{}_zero_and_singleton_expected".format(delta_score_bin,strand_corrected_ref)] += float(zeroton_plus_singleton_mutation_rate) 
-
-        ## Get the best delta score bin for the current position
-        per_pos_max_delta_bin[pos] = get_best_delta_bin(per_pos_max_delta_bin[pos], delta_score_bin) 
-
-        ## Add to the positions considered 
-        considered_position.add(pos)
-
-        ## set the position as a variant added
-        added_var_pos.add(pos)
-
-    ## If no var, or var doesn't have PASS filter, or coverage is below cc, or var is non-SNV, REF->REF
+    ## Iterate through each position in the region and update O and E counts
     for region_pos in spliceai_region_dict.keys():
-        
+
         ## If the region position does not overlap the query region, skip it
         if region_pos < region_start or region_pos > region_end:
             continue
 
-        ## If the position had already been added
-        if region_pos in added_var_pos:
-            continue
-
-        ## get ref allele for current position
-        ref_allele = list(spliceai_region_dict[region_pos].keys()).pop() if region_pos in spliceai_region_dict and len(spliceai_region_dict[region_pos].keys()) == 1 else "None"
-
-        ## Get strand corrected alleles
-        strand_corrected_ref = correct_allele_by_strand(region_strand, ref_allele)
-
-        ## Skip any SpliceAI predictions with a ref allele of N
-        if strand_corrected_ref == "N":
-            error = ("\n\n!!ERROR!! Position with Ref allele 'N'"
-                    " Position will be skpped"
-                    " Position = {}:{}\n").format(region_chrom, region_pos)
-            output_log(error,error_log_file)
-            ref_allele_n += 1
-            cur_ref_allele_n += 1
-            continue
-
-        ## skip sites with no info
-        ### This happends when multiple ref allels occur but no ref allele matches the fasta ref allele
-        if len(spliceai_region_dict[region_pos]) == 0:
-            error = ("\n\n!!ERROR!! Missing Spliceai Info"
-                    " at Position = {}:{}\n"
-                    " Skipping Site").format(region_chrom, region_pos)
-            output_log(error,error_log_file)
-            empty_position_info += 1
-            cur_empty_position_info += 1
-            continue
+        pos_list = []
+        ## Check if position has a gnomAD variant
+        if region_pos in gnomad_var_dict:
             
+            ## Update the position list with the gnomAD variant info
+            pos_list = gnomad_var_dict[region_pos]
 
-        ## Get the max/sum of delta score among all ref to alt combinations for the current position 
-        max_sum_delta_score = (max([get_max_sum_delta_score(spliceai_region_dict[region_pos][ref_allele][alt_allele]) for alt_allele in spliceai_region_dict[region_pos][ref_allele].keys()])
-                               if SCORE_TYPE == "sum" 
-                               else max([get_max_delta_score(spliceai_region_dict[region_pos][ref_allele][alt_allele]) for alt_allele in spliceai_region_dict[region_pos][ref_allele].keys()])
-                               if SCORE_TYPE == "max"
-                               else None)
+        else: ## If no variant, get info for the variant free nucleotide
+            
+            ## Get ref allele
+            ref_allele = list(spliceai_region_dict[region_pos].keys()).pop() if region_pos in spliceai_region_dict and len(spliceai_region_dict[region_pos].keys()) == 1 else "None"
 
-        if max_sum_delta_score is None:
-            raise ValueError("!!ERROR!! Unrecognized value for the SpliceAI Score Type == '{}'".format(SCORE_TYPE))
+            ## Get strand corrected alleles
+            strand_corrected_ref = correct_allele_by_strand(region_strand, ref_allele)
 
-        delta_score_bin = get_delta_score_bin(max_sum_delta_score, delta_score_bins)
+            ## Alt allele is same as ref (No ref to alt change)
+            strand_corrected_alt = strand_corrected_ref
 
-        zerotons = 1.0
-        zerotons_plus_singletons = 1.0
-        singletons = 0.0
-        non_zerotons = 0.0
-        non_zerotons_plus_singletons = 0.0 
+            ## Skip any SpliceAI predictions with a ref allele of N
+            if strand_corrected_ref == "N":
+                error = ("\n\n!!ERROR!! Position with Ref allele 'N'"
+                        " Position will be skpped"
+                        " Position = {}:{}\n").format(region_chrom, region_pos)
+                output_log(error,error_log_file)
+                ref_allele_n += 1
+                cur_ref_allele_n += 1
+                continue
 
-        ## Get zeroton and zeroton plus singleton mutation rate for the current delta score bin and ref allele
-        zeroton_mutation_rate = float(mut_rate_dict[delta_score_bin]["zeroton"][strand_corrected_ref])
-        zeroton_plus_singleton_mutation_rate = float(mut_rate_dict[delta_score_bin]["zeroton_plus_singleton"][strand_corrected_ref]) 
+            ## skip sites with no info
+            ### This happends when multiple ref allels occur but no ref allele matches the fasta ref allele
+            if len(spliceai_region_dict[region_pos]) == 0:
+                error = ("\n\n!!ERROR!! Missing Spliceai Info"
+                        " at Position = {}:{}\n"
+                        " Skipping Site").format(region_chrom, region_pos)
+                output_log(error,error_log_file)
+                empty_position_info += 1
+                cur_empty_position_info += 1
+                continue
 
-        ## add ovserved and expected scores
-        ### Observed scores
-        t_id_dict[transcript_id]["zeroton_observed_var_count"] += non_zerotons
-        t_id_dict[transcript_id]["zero_and_singleton_observed_var_count"] += non_zerotons_plus_singletons
+            ## Get the max/sum of delta score among all ref to alt combinations for the current position 
+            max_sum_delta_score = (max([get_max_sum_delta_score(spliceai_region_dict[region_pos][ref_allele][alt_allele]) for alt_allele in spliceai_region_dict[region_pos][ref_allele].keys()])
+                                   if SCORE_TYPE == "sum" 
+                                   else max([get_max_delta_score(spliceai_region_dict[region_pos][ref_allele][alt_allele]) for alt_allele in spliceai_region_dict[region_pos][ref_allele].keys()])
+                                   if SCORE_TYPE == "max"
+                                   else None)
 
-        t_id_dict[transcript_id]["{}_zeroton_observed".format(delta_score_bin)] += non_zerotons
-        t_id_dict[transcript_id]["{}_{}_zeroton_observed".format(delta_score_bin,strand_corrected_ref)] += non_zerotons
-        t_id_dict[transcript_id]["{}_zero_and_singleton_observed".format(delta_score_bin)] += non_zerotons_plus_singletons 
-        t_id_dict[transcript_id]["{}_{}_zero_and_singleton_observed".format(delta_score_bin,strand_corrected_ref)] += non_zerotons_plus_singletons 
+            if max_sum_delta_score is None:
+                raise ValueError("!!ERROR!! Unrecognized value for the SpliceAI Score Type == '{}'".format(SCORE_TYPE))
 
-        ## Expected Scores
-        t_id_dict[transcript_id]["zeroton_expectation_sum"] += float(zeroton_mutation_rate)
-        t_id_dict[transcript_id]["zero_and_singleton_expectation_sum"] += float(zeroton_plus_singleton_mutation_rate)
+            delta_score_bin = get_delta_score_bin(max_sum_delta_score, delta_score_bins)
 
-        t_id_dict[transcript_id]["{}_zeroton_expected".format(delta_score_bin)] += float(zeroton_mutation_rate) 
-        t_id_dict[transcript_id]["{}_{}_zeroton_expected".format(delta_score_bin, strand_corrected_ref)] += float(zeroton_mutation_rate) 
-        t_id_dict[transcript_id]["{}_zero_and_singleton_expected".format(delta_score_bin)] += float(zeroton_plus_singleton_mutation_rate) 
-        t_id_dict[transcript_id]["{}_{}_zero_and_singleton_expected".format(delta_score_bin,strand_corrected_ref)] += float(zeroton_plus_singleton_mutation_rate) 
+            zerotons = 1.0
+            zerotons_plus_singletons = 1.0
+            singletons = 0.0
+            non_zerotons = 0.0
+            non_zerotons_plus_singletons = 0.0 
 
-        ## Get the best delta score bin for the current position
-        per_pos_max_delta_bin[region_pos] = get_best_delta_bin(per_pos_max_delta_bin[region_pos], delta_score_bin) 
-    
-        ## Add to the positions considered 
+            ## Update the position list
+            pos_list.append({"zerotons": zerotons,
+                             "zerotons_plus_singletons": zerotons_plus_singletons,
+                             "singletons": singletons,
+                             "non_zerotons": non_zerotons,
+                             "non_zerotons_plus_singletons":non_zerotons_plus_singletons,
+                             "strand_corrected_ref": strand_corrected_ref,
+                             "strand_corrected_alt": strand_corrected_alt,
+                             "max_sum_delta_score": max_sum_delta_score,
+                             "delta_score_bin": delta_score_bin})
+
+
+        ## Iterate through each dict in the position list
+        for pos_dict in pos_list:
+            
+            ## Identify values
+            score_bin = pos_dict["delta_score_bin"]
+            corrected_ref = pos_dict["strand_corrected_ref"]
+            corrected_alt = pos_dict["strand_corrected_alt"]
+            nz = float(pos_dict["non_zerotons"])
+            nzps = float(pos_dict["non_zerotons_plus_singletons"])
+
+            ## Get zeroton and zeroton plus singleton mutation rate for the current delta score bin and ref allele
+            zeroton_mutation_rate = float(mut_rate_dict[score_bin]["zeroton"][corrected_ref])
+            zeroton_plus_singleton_mutation_rate = float(mut_rate_dict[score_bin]["zeroton_plus_singleton"][corrected_ref]) 
+            
+            ## add ovserved and expected scores
+            ### Observed scores
+            t_id_dict[transcript_id]["zeroton_observed_var_count"] += nz
+            t_id_dict[transcript_id]["zero_and_singleton_observed_var_count"] += nzps
+
+            t_id_dict[transcript_id]["{}_zeroton_observed".format(score_bin)] += nz
+            t_id_dict[transcript_id]["{}_{}_zeroton_observed".format(score_bin, corrected_ref)] += nz
+            t_id_dict[transcript_id]["{}_zero_and_singleton_observed".format(score_bin)] += nzps 
+            t_id_dict[transcript_id]["{}_{}_zero_and_singleton_observed".format(score_bin, corrected_ref)] += nzps 
+
+            ## Expected Scores
+            t_id_dict[transcript_id]["zeroton_expectation_sum"] += zeroton_mutation_rate
+            t_id_dict[transcript_id]["zero_and_singleton_expectation_sum"] += zeroton_plus_singleton_mutation_rate
+
+            t_id_dict[transcript_id]["{}_zeroton_expected".format(score_bin)] += zeroton_mutation_rate 
+            t_id_dict[transcript_id]["{}_{}_zeroton_expected".format(score_bin, corrected_ref)] += zeroton_mutation_rate 
+            t_id_dict[transcript_id]["{}_zero_and_singleton_expected".format(score_bin)] += zeroton_plus_singleton_mutation_rate 
+            t_id_dict[transcript_id]["{}_{}_zero_and_singleton_expected".format(score_bin, corrected_ref)] += zeroton_plus_singleton_mutation_rate
+
+            ## Get the best delta score bin for the current position
+            per_pos_max_delta_bin[region_pos] = get_best_delta_bin(per_pos_max_delta_bin[region_pos], score_bin) 
+
+        
+        ## Update considered positions
         considered_position.add(region_pos)
-
+        
     ## Update the transcript dict with error info
-    t_id_dict[transcript_id]["non_matching_ref_alelles"] += cur_non_matching_ref_alleles
-    t_id_dict[transcript_id]["non_matching_symbol"] += cur_non_matching_symbols
+    t_id_dict[transcript_id]["non_matching_ref_alelles"] += non_matching_ref_alleles
+    t_id_dict[transcript_id]["non_matching_symbol"] += non_matching_symbols
     t_id_dict[transcript_id]["ref_alleles_as_N"] += cur_ref_allele_n
     t_id_dict[transcript_id]["empty_position"] += cur_empty_position_info 
     t_id_dict[transcript_id]["positions_considered"] += len(considered_position)
+
 
     ## Get the count of positions with each delta score bin
     delta_bin_counts = defaultdict(int)
@@ -1511,7 +1399,7 @@ def o_e_counts(parser, args):
                 (non_matching_ref_alleles, 
                  non_matching_symbols, 
                  ref_allele_n, 
-                 empty_position_info) = get_gnomad_vars_by_position(gnomad_vcf,
+                 empty_position_info) = get_by_region_o_e_counts(gnomad_vcf,
                                                                     contains_chr,
                                                                     relative_spliceai_region["chrom"],
                                                                     relative_spliceai_region["start"],
