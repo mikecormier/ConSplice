@@ -813,3 +813,189 @@ def gnomad_coverage_by_region(cov_header_dict, coverage_label, cov_file, region)
     return(by_position_coverage_dict)
 
 
+
+
+def parse_gnomad_by_region(region_chrom, 
+                           region_start,
+                           region_end,
+                           region_strand,
+                           contains_chr,
+                           vcf,
+                           vep_index,
+                           spliceai_region_dict,
+                           by_pos_cov_dict,
+                           coverage_cutoff,
+                           alt_symbol_dict,
+                           error_log_file,
+                           delta_score_bins,
+                           SCORE_TYPE):
+
+    """
+    parse_gnomad_by_region
+    ======================
+    Method to parse gnomAD variants by in a specific region and identify variants that pass filters. 
+     Variants that pass all filters will be added to an object that is returned. 
+
+
+    It takes a cyvcf2 object and iterates over ecah varaint that is found between the position interval. Checks are done 
+     for each varaint found to ensure the variant is appropriate. Checks include: 
+        1) If the variant is an SNV. If the variant is not an SNV the variant will be skipped. 
+        2) If the variant has a PASS filter. If the variant does not have a PASS filter the variant is skipped
+        3) If the variant reference allele matches the reference allele anotated in the near splice site being compared
+        4) If the variant has sufficient sequencing coverage. If not, the variant is skipped.
+        5) If the variant is wihtin a transcript that the near splice site position is annotated in. If so, it is kept.
+            if not, the variant is skipped. 
+    
+
+    Parameters:
+    -----------
+    1)  region_chrom:              (str)  The chromsome to look in for the position interval 
+    2)  region_start:              (int)  The start position of the interval
+    3)  region_end:                (int)  The end position of the interval
+    4)  region_strand:             (str)  A string representing the strand the gene is on. (+ or -)
+    5)  contains_chr:             (bool)  whether or not the the sequence names in the vcf start with chr or not
+    6)  vcf:                (cyvcf2 obj)  A cyvcf2 object for the current vcf/bcf file being queried 
+    7)  vep_index:                (list)  A list that represents the vep csq index in the gnomad vcf 
+    8)  spliceai_region_dict:     (dict)  A dictionary of SpliceAI information for the current region 
+    9)  by_pos_cov_dict:          (dict)  A dictionary of var coverage for the current region
+    10) coverage_cutoff:         (float)  The coverage value at each position to use as a cutoff from the coverage file. (Between 0.0 and 1.0) 
+    11) alt_symbol_dict:          (dict)  A dictionary of different alternative gene symbols 
+    12) error_log_file:            (str)  The error log file to write errors to
+    13) delta_score_bins:         (dict)  A list of delta score bin.
+    14) SCORE_TYPE:                (str)  'max' or 'sum' score type used to calculate the score for a specific position
+
+    Returns:
+    ++++++++
+    1) (dict) A dictionary of gnomAD variants that pass filters
+    2)  (int) The count of non matrhcing ref alleles 
+    3)  (int) The count of non matching symbols
+    """
+
+
+    ## error tracking
+    cur_non_matching_ref_alleles = 0
+    cur_non_matching_symbols = 0
+    added_var_pos = set()
+
+    ## Var position dict
+    var_dict = defaultdict(list)
+    
+    ## Iterate over varaints that are with the same chromosome and position
+    search = "chr{}:{}-{}".format(region_chrom,region_start,region_end) if contains_chr else "{}:{}-{}".format(region_chrom,region_start,region_end)  
+    for var in vcf(search):
+
+        ## Get variant info
+        chrom = var.CHROM
+        pos = var.POS
+        ref = var.REF
+        alt = var.ALT[0]    
+        AC = var.INFO.get("AC")
+        var_filter = var.FILTER if var.FILTER != None else "PASS"
+        zerotons = 0
+        zerotons_plus_singletons = 0
+        singletons = 0
+        non_zerotons = 0
+        non_zerotons_plus_singletons = 0 
+
+        ## Skip non SNVs
+        ### We will only consider SNVs
+        if len(ref) > 1 or len(alt) > 1:
+            continue
+
+        ## Only look at variants with a PASS filter
+        if var_filter != "PASS":
+            continue
+
+        ## Check for matching reference alleles at the current position
+        spliceai_ref_allele = list(spliceai_region_dict[pos].keys()).pop() if pos in spliceai_region_dict and len(spliceai_region_dict[pos].keys()) == 1 else "None" 
+        if str(ref) != str(spliceai_ref_allele):
+            ## Log error
+            different_ref = list(spliceai_region_dict[pos].keys()).pop() if pos in spliceai_region_dict and len(spliceai_region_dict[pos].keys()) == 1 else "None"
+            error = ("\n\n!!ERROR!! REF alleles don't match"
+                     "\nPOSITION: {}"
+                     "\ndiffering REF: {}"
+                     "\nvariant info: {}"
+                     "\ngnomAD varinat will be skipped").format(pos,different_ref, var)
+            output_log(error,error_log_file)
+            cur_non_matching_ref_alleles += 1
+
+            continue
+
+        ## Get the position specific coverage
+        ## If position does not have enough sequence coverage, skip it 
+        if float(by_pos_cov_dict[int(pos)]) < coverage_cutoff:
+            continue
+
+        ## Get a list of dictionaries for each vep annotation for the current var. 
+        vep_annotations = [dict(zip(vep_index, x.strip().split("|"))) for x in var.INFO["vep"].strip().split(",")]
+
+        ## Iterate over each vep annotation
+        found = False
+        var_symbols = []
+        for csq in vep_annotations:
+
+            ## Skip csq entries that are missing the SYMBOL key
+            if "SYMBOL" not in csq:
+                continue
+
+            ## Check for matching Symbols 
+            if csq["SYMBOL"] in spliceai_region_dict[pos][ref][alt].keys() or csq["SYMBOL"] in { alt_symbol for symbol in spliceai_region_dict[pos][ref][alt].keys() if symbol in alt_symbol_dict for alt_symbol in alt_symbol_dict[symbol] }:
+                found = True
+                break
+            else:
+                var_symbols.append(csq["SYMBOL"])
+                
+
+        ## If the variant symbol is unable to match with the spliceai, skip it
+        if not found:
+            error = ("\n\n**WARNING** NON matching gene symbols."
+                     "\nPOSITION: {}"
+                     "\n\tSite Gene: {}"
+                     "\n\tVariant Gene: {}"
+                     "\ngnomAD variant will be skipped.").format(pos, ", ".join(spliceai_region_dict[pos][ref][alt].keys()), ", ".join(var_symbols))
+            output_log(error,error_log_file)
+            cur_non_matching_symbols += 1
+
+            continue
+
+        ## Get strand corrected alleles
+        strand_corrected_ref = correct_allele_by_strand(region_strand, ref)
+        strand_corrected_alt = correct_allele_by_strand(region_strand, alt)
+
+        ## Get the max/sum of delta score for the current position, reference allele, and alternative allele
+        max_sum_delta_score = (get_max_sum_delta_score(spliceai_region_dict[pos][ref][alt])
+                               if SCORE_TYPE == "sum"
+                               else get_max_delta_score(spliceai_region_dict[pos][ref][alt])
+                               if SCORE_TYPE == "max"
+                               else None)
+
+        if max_sum_delta_score is None:
+            raise ValueError("!!ERROR!! Unrecognized value for the SpliceAI Score Type == '{}'".format(SCORE_TYPE))
+
+        delta_score_bin = get_delta_score_bin(max_sum_delta_score, delta_score_bins)
+
+
+        ## AC type
+        zerotons = 0.0
+        zerotons_plus_singletons = 1.0 if AC <= 1 else 0.0
+        singletons = 1.0 if AC == 1 else 0.0
+        non_zerotons = 1.0 if AC > 0.0 else 0.0
+        non_zerotons_plus_singletons = 1.0 if AC > 1 else 0.0 
+
+        
+        ## Dict with List of variants at each position 
+        var_dict[pos].append({"pos": pos,
+                              "ref": ref,
+                              "alt": alt,
+                              "zerotons": zerotons,
+                              "zerotons_plus_singletons": zerotons_plus_singletons,
+                              "singletons": singletons,
+                              "non_zerotons": non_zerotons,
+                              "non_zerotons_plus_singletons":non_zerotons_plus_singletons,
+                              "strand_corrected_ref": strand_corrected_ref,
+                              "strand_corrected_alt": strand_corrected_alt,
+                              "max_sum_delta_score": max_sum_delta_score,
+                              "delta_score_bin": delta_score_bin})
+
+
+    return(var_dict, cur_non_matching_ref_alleles, cur_non_matching_symbols)
