@@ -36,7 +36,7 @@ def set_global_vars():
 
 def add_constraint_scores(sub_p):
 
-    p = sub_p.add_parser("score-oe",
+    p = sub_p.add_parser("calculate-oe",
                          help = "Calculate the O/E and Percentile constraint scores",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
                          description=("\n\t*****************************************\n"
@@ -55,7 +55,7 @@ def add_constraint_scores(sub_p):
         "--o-and-e-scores",
         metavar = "Observed and Expected Score File", 
         required=True, 
-        help="(Required) The path the observed over expected scores file."
+        help="(Required) The path to the observed over expected scores file."
     )
 
     req.add_argument(
@@ -89,8 +89,8 @@ def add_constraint_scores(sub_p):
     p.add_argument(
         "--pct-col-name",
         metavar="Percentile Column Name",
-        default = "sc_percentile",
-        help = "The name of the column to create the represents the percentile score. (Default = 'sc_percentile' for splicing constraint percentile)"
+        default = "ConSplice_percentile",
+        help = "The name of the column to create the represents the ConSplice percentile score. (Default = 'ConSplice_percentile')"
     )
 
     p.add_argument(
@@ -400,7 +400,7 @@ def constraint_scores(parser, args):
            "\n================"
            "\n - config-path:              {}"
            "\n - o-and-e-scores:           {}"
-           "\n - mutation-table            {}" 
+           "\n - mutation-table:           {}" 
            "\n - out-file:                 {}"
            "\n - pct-rec-rate:             {}"
            "\n - remove-duplicate:         {}"
@@ -427,10 +427,12 @@ def constraint_scores(parser, args):
 
     ## set global variables from config
     if args.spliceai_score_type == "max":
-        delta_score_bins = config_dict["score_bins"]["max_spliceai_score_bins"]
+        delta_score_bins = config_dict["SCORE_BINS"]["max_spliceai_score_bins"]
+        SAI_SCORE_TYPE = "max"
 
     elif args.spliceai_score_type == "sum":
-        delta_score_bins = config_dict["score_bins"]["sum_spliceai_score_bins"]  
+        delta_score_bins = config_dict["SCORE_BINS"]["sum_spliceai_score_bins"]  
+        SAI_SCORE_TYPE = "sum"
 
     set_global_vars()
 
@@ -487,7 +489,7 @@ def constraint_scores(parser, args):
         calculate_o_over_e(lined = line_dict, 
                            observed_column_suffix = "zeroton_observed", 
                            expected_column_suffix = "zeroton_expected", 
-                           one_exon_mean = 2200,
+                           one_exon_mean = 50000,
                            weight_dict = weights_dict, 
                            col_list = o_over_e_col)
 
