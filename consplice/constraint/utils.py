@@ -8,7 +8,7 @@ import numpy as np
 import pyranges as pr
 from collections import defaultdict
 from pyfaidx import Fasta
-
+from interlap import InterLap
 
 
 
@@ -769,7 +769,6 @@ def spliceai_scores_by_region(region_list,
                                                                       fa_ref_allele)
                     output_log(error,error_log_file)
                     if spliceai_var.POS not in multi_ref_pos:
-                        pos_with_multiple_refs += 1
                         multi_ref_pos.add(spliceai_var.POS)
 
                 ## Add alt alleles 
@@ -999,3 +998,66 @@ def parse_gnomad_by_region(region_chrom,
 
 
     return(var_dict, cur_non_matching_ref_alleles, cur_non_matching_symbols)
+
+
+def extract_constraint_score(file_path, 
+                             chrom_col, 
+                             start_col, 
+                             end_col, 
+                             score_col,
+                             zero_based
+):
+    """
+    extract_constraint_score
+    ========================
+    This method is used to create interlap objects for the ConSplice region scores for fast interval tree lookup. 
+
+    A 0-baesd region will be parsed into a 1-baed region
+    
+    Parameters:
+    -----------
+    1) file_path:     (str) The file path to the splicing constraint regional scores file
+    2) chrom_col:     (str) The name of the chromosome column in the constraint file
+    3) start_col:     (str) The name of the start column in the constraint file
+    4) end_col:       (str) The name of the end column in the constraint file
+    5) score_col:     (str) The name of the score column in the constraint file
+    6) zero_based:   (bool) True or False, whether or not the ConSplice regions are 0-based or 1-based. (True = 0-based). If set to True, they will be adjusted to 1-based
+
+    Return:
+    +++++++
+    1) (dict) A dictionary of interlap objects. Keys = chromosome name with any 'chr' prefix removed. 
+                value = the interlap object for constraint regions. (Index 0 = region start, 1 = region end, 2 = region score, 3 = gene name)
+    """
+
+    score_dict = defaultdict(InterLap)
+
+    try:
+        fh = (
+            gzip.open(file_path, "rt", encoding="utf-8")
+            if file_path.endswith(".gz")
+            else io.open(file_path, "rt", encoding="utf-8")
+        )
+    except IOError as e:
+        print("\n!!ERROR!! unable to open the ConSplice score file: '{}'".format(file_path))
+        print(str(e))
+        sys.exit(1)
+
+    header = fh.readline().strip().replace("#", "").split("\t")
+
+    ## Add each score to an interlap object
+    for line in fh:
+
+        line_dict = dict(zip(header, line.strip().split("\t")))
+
+        score_dict[line_dict[chrom_col].replace("chr", "")].add(
+            (
+                int(line_dict[start_col]) if zero_based == False else (int(line_dict[start_col]) + 1), ## Convert to 1-based if 0-based
+                int(line_dict[end_col]),
+                float(line_dict[score_col].strip()),
+                line_dict["gene_symbol"],
+            )
+        )
+
+    fh.close()
+
+    return score_dict
