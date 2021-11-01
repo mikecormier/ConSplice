@@ -106,13 +106,13 @@ def select_scores(parser, args):
            "\n - o-over-e-field:       {}"
            "\n - pctl-score:           {}"
            "\n - out-file:             {}"
-           "\n - new-o-over-e-name:    {}"
+           "\n - new-oe-name:          {}"
            "\n - new-pctl-name:        {}"
            ).format(args.score_file, 
                     args.o_over_e_field, 
                     args.pctl_field, 
                     args.out_file, 
-                    args.new_o_over_e_name, 
+                    args.new_oe_name, 
                     args.new_pctl_name
                     )
     )
@@ -125,11 +125,11 @@ def select_scores(parser, args):
     
     print("\n\tKeeping the '{}' O/E and '{}' Percentile score fields".format(args.o_over_e_field, args.pctl_field))
 
-    print("\n\tRenaming the '{}' O/E score field to '{}".format(args.o_over_e_field, args.new_o_over_e_name))
+    print("\n\tRenaming the '{}' O/E score field to '{}".format(args.o_over_e_field, args.new_oe_name))
 
     print("\n\tRenaming the '{}' Percentile score field to '{}'".format(args.pctl_field, args.new_pctl_name))
 
-    scores_df = scores_df.rename(columns = {args.o_over_e_field: args.new_o_over_e_name, args.pctl_field: args.new_pctl_name})
+    scores_df = scores_df.rename(columns = {args.o_over_e_field: args.new_oe_name, args.pctl_field: args.new_pctl_name})
 
     scores_df["region_size"] = scores_df.region_end - (scores_df.region_start - 1) ## offset by 1 to count for the first position and last position, not just the difference
 
@@ -143,7 +143,7 @@ def select_scores(parser, args):
                            "gene_id",
                            "gene_symbol",
                            "region_size",
-                           args.new_o_over_e_name,
+                           args.new_oe_name,
                            args.new_pctl_name]]
 
     print("\n> Sorting region by alphanumeric chromosome and start position")
