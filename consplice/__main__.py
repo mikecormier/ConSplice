@@ -11,6 +11,9 @@ from .constraint.calculate_constraint_score import add_constraint_scores
 from .constraint.agg_regional_scores import add_aggregate_overlapping_regions
 from .constraint.select_scores import add_select_score
 from .constraint.convert_to_bed import add_to_bed
+from .constraint.score_txt import add_score_txt
+from .constraint.score_bed import add_score_bed
+from .constraint.score_vcf import add_score_vcf
 
 
 
@@ -109,6 +112,12 @@ def main(args=None):
     add_select_score(sub_con)
 
     add_to_bed(sub_con)
+
+    add_score_txt(sub_con)
+
+    add_score_bed(sub_con)
+
+    add_score_vcf(sub_con)
 
 
 
