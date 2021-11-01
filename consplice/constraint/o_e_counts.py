@@ -188,7 +188,7 @@ def add_o_e_counts(sub_p):
 #---------------------------------------------------------------------------------------------------------------------------------
 
 
-def load_config_file(config_path, region_type, chrom_list, spliceai_score_type):
+def load_config_file(config_path, region_type, chrom_list, spliceai_score_type, window_size, step_size):
     """
     load_config_file
     ================
@@ -200,6 +200,8 @@ def load_config_file(config_path, region_type, chrom_list, spliceai_score_type):
     2) region_type:         (str) The region_type from the input arguments
     3) chrom_list:         (list) A list of chromosomes from the input arguments
     4) spliceai_score_type: (str) The score type from the input arguments
+    5) window_size:         (int) The size of the window 
+    6) step_size:           (int) The step size
     """
 
     ## Global vars
@@ -229,13 +231,17 @@ def load_config_file(config_path, region_type, chrom_list, spliceai_score_type):
                       ".{}".format(region_type) + 
                       ".spliceai_{}".format(spliceai_score_type) +
                       ".O_E_Counts.chr{}.".format(".chr".join(chrom_list)) +
-                      config_dict["LOG_FILES"]["error_log"]
+                      ".{}window".format(window_size) +
+                      ".{}step".format(step_size) + 
+                       config_dict["LOG_FILES"]["error_log"]
                       )
 
     out_log_file = (file_date +
                     ".{}".format(region_type) + 
                     ".spliceai_{}".format(spliceai_score_type) +
                     ".O_E_Counts.chr{}.".format(".chr".join(chrom_list)) +
+                    ".{}window".format(window_size) +
+                    ".{}step".format(step_size) + 
                     config_dict["LOG_FILES"]["out_log"]
                     )
     
@@ -1128,7 +1134,9 @@ def o_e_counts(parser, args):
     load_config_file(config_path = args.config_path, 
                      region_type = args.region_type, 
                      chrom_list = args.chrom, 
-                     spliceai_score_type = args.spliceai_score_type)
+                     spliceai_score_type = args.spliceai_score_type,
+                     window_size = args.window_size if args.window_size is not None else "GENE",
+                     step_size = args.step_size if args.step_size is not None else "GENE")
 
     
     print("\n\nGetting gene and transcript region info")
