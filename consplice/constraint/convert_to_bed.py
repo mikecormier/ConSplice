@@ -1,13 +1,8 @@
 import sys
 import os
-import pandas as pd
-import numpy as np
+import io
 import argparse 
-from scipy.stats.mstats import gmean
-from scipy.stats import hmean
-from tqdm import tqdm
-from interlap import InterLap
-from collections import defaultdict
+from Bio.bgzf import BgzfWriter
 
 
 
@@ -54,13 +49,6 @@ def add_to_bed(sub_p):
         help="(Optional) The output file type. Whether the output file should be a normal bed file or a bgzipped bed file. Choices = 'bed' or 'bedgz'. Default = 'bed'"
     )
 
-    p.add_argument(
-        "--sort",
-        action = "store_false",
-        help="(Optional) Whether to sort the output file or not. Deafult = True."
-    )
-
-
     p.set_defaults(func=to_bed)
 
 
@@ -70,6 +58,12 @@ def add_to_bed(sub_p):
 
 def to_bed(parser, args):
 
+    outfile = args.out_file
+    if not args.out_file.endswith("bed") and args.out_type == "bed":
+        outfile = args.out_file + ".bed"
+
+    elif not args.out_file.endswith("bed.gz") and args.out_type == "bedgz":
+        outfile = args.out_file + ".bed.gz" if not args.out_file.endswith(".bed") else args.out_file + ".gz"
 
     print("\n\t**********************")
     print("\t* ConSplice - to bed *")
@@ -81,16 +75,47 @@ def to_bed(parser, args):
            "\n - score-file:           {}"
            "\n - out-file:             {}"
            "\n - out-type:             {}"
-           "\n - sort:                 {}"
            ).format(args.score_file, 
-                    args.out_file, 
+                    outfile, 
                     args.out_type, 
-                    args.sort,
                     )
     )
 
 
+    print("\nParsing input file, updating to 0-based and writing to '{}'".format(outfile))
+
+    ## open ConSplice file
+    with io.open(args.score_file, "rt", encoding = "utf-8") as in_fh:
+
+        ## Open output file
+        try:
+            out_fh = open(outfile, "w") if args.out_type == "bed" else BgzfWriter(outfile, "wb")  
+
+        except IOError as e:
+            print(str(e))
+            sys.exit(1)
+
+        ## Update output file with header
+        header_line = in_fh.readline()
+
+        out_fh.write(header_line)
+
+        header = header_line.strip().split("\t")
+
+        header_dict = dict(zip(header,range(len(header))))
+
+        ## Add each line to the output file with the start position adjusted from 1-based to 0-based
+        for line in in_fh:
+            
+            line_list = line.strip().split("\t")
+
+            line_list[header_dict["region_start"]] = str(int(line_list[header_dict["region_start"]]) - 1)
+
+            out_fh.write("\t".join(line_list) + "\n")
+
+        out_fh.close()
 
 
+    print("\nNew file writen to '{}'".format(outfile))
 
-
+    print("\nDONE")
