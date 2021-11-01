@@ -9,7 +9,7 @@ ConSplice consists of
 
   1) a statistical model of splicing constarint accross protein-coding genes in the human genome
 
-  2) a machine learning model that utlizes evidence of splicing from splicing predictions and the constraint of those evens from ConSplice to improve the interpritation of alternative splicing variants.
+  2) a machine learning model that utlizes evidence of splicing from splicing predictions and the constraint of those events from ConSplice to improve the interpritation of alternative splicing variants.
 
 ConSplice thus provides an improved method to identify deleterious alternative splicing variants that affect rare disease. 
 
@@ -18,7 +18,7 @@ Additionally, ConSplice allows one to identify splicing variants of interest out
 
 ### Constarint 
 
-ConSplice is a statistical model created to predict that genetic constraint against cryptic splicing in the Human Genome. 
+**ConSplice** is a statistical model created to predict that genetic constraint against cryptic splicing in the Human Genome. 
 
 ConSplice uses population levels of purifying selection across coding and non-coding regions of protein-coding genes from ostensibly healty inviduals in [gnomAD](https://gnomad.broadinstitute.org/), [Karczewski et al., Nature 2020](https://www.nature.com/articles/s41586-020-2308-7), to infer genetic constraint. It also uses per-nucleotide splicing predictions from [SpliceAI](https://github.com/Illumina/SpliceAI), [Jaganathan et al., Cell 2019](https://www.sciencedirect.com/science/article/pii/S0092867418316295?via%3Dihub), to identifying regions of genes likely important for alternative splicing. Combining signals of purifying selection from gnomAD and splicing from SpliceAI allowes use to infer the constraint against cryptic splicing. 
 
@@ -31,7 +31,7 @@ The ConSplice module:
 
 ### Ensemble Machine Learning Approach
 
-ConSpliceML is a machine learning approach using the ConSplice constraint score with predicted splicing from SpliceAI and SQUIRLS to identify potential pathogenic alternative splicing variants.
+**ConSpliceML** is a machine learning approach using the ConSplice constraint score with per-base predictions of splicing from [SpliceAI](https://github.com/Illumina/SpliceAI) and [SQUIRLS](https://squirls.readthedocs.io/en/latest/) to identify potential pathogenic alternative splicing variants.
 
 The intuition behind this model is based on improving the interpritation of pathogenic splicing using the splicing constraint metric. By combining a per-nucleotide prediction of alternative splicing with the 
 pathogenic interpritation model of constraint, we can improve both the identification and interpritation of alternative splicing variants in terms of rare disease. 
