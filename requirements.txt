@@ -12,3 +12,4 @@ pyyaml
 gsort
 bcftools
 htslib
+biopython
