@@ -59,10 +59,10 @@ def add_constraint_scores(sub_p):
     )
 
     req.add_argument(
-        "--mutation-table",
+        "--substitution-matrix",
         metavar="Mutation Table",
         required = True,
-        help = "(Required) The mutation table used to calculate the mutation rate. The different weights used to calcluate the O/E scores will be calculated from this mutation frequency table"
+        help = "(Required) The substitution matrix used to calculate the substitution rate. The different weights used to calcluate the O/E scores will be calculated from this substitution frequency table"
     )
 
     req.add_argument(
@@ -398,20 +398,20 @@ def constraint_scores(parser, args):
 
     print(("\nInput Arguments:"
            "\n================"
-           "\n - config-path:              {}"
-           "\n - o-and-e-scores:           {}"
-           "\n - mutation-table:           {}" 
-           "\n - out-file:                 {}"
-           "\n - pct-rec-rate:             {}"
-           "\n - remove-duplicate:         {}"
-           "\n - pct-col-name:             {}"
-           "\n - sort-by-pos:              {}"
-           "\n - spliceai-score-type:      {}"
+           "\n - config-path:               {}"
+           "\n - o-and-e-scores:            {}"
+           "\n - substitution-matrix-table: {}" 
+           "\n - out-file:                  {}"
+           "\n - pct-rec-rate:              {}"
+           "\n - remove-duplicate:          {}"
+           "\n - pct-col-name:              {}"
+           "\n - sort-by-pos:               {}"
+           "\n - spliceai-score-type:       {}"
 
            "\n"
            ).format(args.config_path,
                     args.o_and_e_scores, 
-                    args.mutation_table,
+                    args.substitution_matrix,
                     args.out_file,
                     args.pct_rec_rate,
                     args.remove_duplicate,
@@ -442,7 +442,7 @@ def constraint_scores(parser, args):
     print("\nCalculating  weights to use for O/E scoring")
     print("\n  NOTE: Only calculated from the zeroton model")
     
-    weights_dict = get_weights(args.mutation_table)
+    weights_dict = get_weights(args.substitution_matrix)
 
     ## load the O and E Score file into a pandas data frame
     print("\nReading data from: {}".format(args.o_and_e_scores))
@@ -524,13 +524,13 @@ def constraint_scores(parser, args):
     print("\n\tunweighted")
     o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
                                                score_column = "Unweighted_O_over_E", 
-                                               percentile_column_name = args.pct_col_name,
+                                               percentile_column_name = "Unweighted_%s" %args.pct_col_name,
                                                invert_percentiles = True)
 
     print("\n\tlinear")
     o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
                                                score_column = "Linear_Weighted_O_over_E", 
-                                               percentile_column_name = "weighted_%s" %args.pct_col_name,
+                                               percentile_column_name = "Linear_weighted_%s" %args.pct_col_name,
                                                invert_percentiles = True)
 
     print("\n\tPHRED")
@@ -558,8 +558,8 @@ def constraint_scores(parser, args):
                                                invert_percentiles = True)
 
 
-    pctl_cols = [args.pct_col_name, 
-                "weighted_%s" %args.pct_col_name, 
+    pctl_cols = ["Unweighted_%s" %args.pct_col_name, 
+                "Linear_weighted_%s" %args.pct_col_name, 
                 "PHRED_weighted_%s" %args.pct_col_name, 
                 "one_minus_prop_weighted_%s" %args.pct_col_name,
                 "one_over_prop_weighted_%s" %args.pct_col_name,
