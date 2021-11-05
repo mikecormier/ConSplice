@@ -230,7 +230,7 @@ def load_config_file(config_path, region_type, chrom_list, spliceai_score_type, 
     error_log_file = (file_date +
                       ".{}".format(region_type) + 
                       ".spliceai_{}".format(spliceai_score_type) +
-                      ".O_E_Counts.chr{}.".format(".chr".join(chrom_list)) +
+                      ".O_E_Counts.chr{}.".format("chr".join(chrom_list)) +
                       ".{}window".format(window_size) +
                       ".{}step".format(step_size) + 
                        config_dict["LOG_FILES"]["error_log"]
@@ -239,7 +239,7 @@ def load_config_file(config_path, region_type, chrom_list, spliceai_score_type, 
     out_log_file = (file_date +
                     ".{}".format(region_type) + 
                     ".spliceai_{}".format(spliceai_score_type) +
-                    ".O_E_Counts.chr{}.".format(".chr".join(chrom_list)) +
+                    ".O_E_Counts.chr{}.".format("chr".join(chrom_list)) +
                     ".{}window".format(window_size) +
                     ".{}step".format(step_size) + 
                     config_dict["LOG_FILES"]["out_log"]
