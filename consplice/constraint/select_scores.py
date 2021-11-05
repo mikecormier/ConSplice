@@ -85,19 +85,9 @@ def add_select_score(sub_p):
 
 def select_scores(parser, args):
 
-    print("\n\nUPDATE SCRIPT TO ADD A HEADER LINE WITH WHICH O/E and PCTL Score WAS KEPT\n\n")
-
-
-    print("\n\nUPDATE SCRIPT TO READ and WRITE In Place rather than loading in with pandas\n\n")
-
-
-    print("\n\nUPDATE SCRIPT TO select scores for both gene and region files. (Currently only works for region files)\n\n")
-
-
     print("\n\t**************************")
     print("\t* Select ConSplice Score *")
     print("\t**************************\n\n")
-
 
 
     print(("\nInput Arguments:"
