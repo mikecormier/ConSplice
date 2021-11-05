@@ -60,8 +60,8 @@ def add_score_vcf(sub_p):
     p.add_argument(
         "--consplice-col",
         metavar = "ConSplice Column Name",
-        default = "ConSplice_percentile",
-        help = "The name of the ConSplice score column in the ConSplice file. (Default = ConSplice_percentile)"
+        default = "ConSplice_Percentile",
+        help = "The name of the ConSplice score column in the ConSplice file. (Default = ConSplice_Percentile)"
     )
 
     p.set_defaults(func=add_conSplice_score)
