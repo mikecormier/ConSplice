@@ -96,8 +96,8 @@ def add_score_bed(sub_p):
     p.add_argument(
         "--consplice-col",
         metavar = "ConSplice Column Name",
-        default = "ConSplice_percentile",
-        help = "The name of the ConSplice score column in the ConSplice file. (Default = ConSplice_percentile)"
+        default = "ConSplice_Percentile",
+        help = "The name of the ConSplice score column in the ConSplice file. (Default = ConSplice_Percentile)"
     )
 
     p.add_argument(
@@ -205,7 +205,7 @@ def add_conSplice_score(parser, args):
         assert args.bed_pos in header, "\n!!ERROR!! thet '{}' position column is not in the bed file".format(args.bed_pos)
         assert args.bed_gene_name in header, "\n!!ERROR!! thet '{}' gene name column is not in the bed file".format(args.bed_gene_name)
 
-        out_fh.write("\t".join(header) + "\t" + args.out_consplice_col + "\n")
+        out_fh.write("#" + "\t".join(header) + "\t" + args.out_consplice_col + "\n")
 
         for line in fh:
             
@@ -220,7 +220,7 @@ def add_conSplice_score(parser, args):
             pos = int(line_dict[args.bed_pos])
 
             ## Get ConSplice score
-            var_score = "NA"
+            var_score = float("NaN")
 
             consplice_scores = list(consplice_interlap[str(chrom)].find((pos,pos)))
 
@@ -229,7 +229,7 @@ def add_conSplice_score(parser, args):
 
             elif args.score_type == "by-gene":
                 
-                gene_name = line_dict[args.bed_gene_name]
+                gene_name = line_dict[args.bed_gene_name].strip()
 
                 score_list = []
                 for score in consplice_scores:
