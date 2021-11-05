@@ -87,8 +87,8 @@ def add_score_txt(sub_p):
     p.add_argument(
         "--consplice-col",
         metavar = "ConSplice Column Name",
-        default = "ConSplice_percentile",
-        help = "The name of the ConSplice score column in the ConSplice file. (Default = ConSplice_percentile)"
+        default = "ConSplice_Percentile",
+        help = "The name of the ConSplice score column in the ConSplice file. (Default = ConSplice_Percentile)"
     )
 
     p.add_argument(
@@ -181,7 +181,7 @@ def add_conSplice_score(parser, args):
         assert args.txt_pos in header, "\n!!ERROR!! thet '{}' position column is not in the txt file".format(args.txt_pos)
         assert args.txt_gene_name in header, "\n!!ERROR!! thet '{}' gene name column is not in the txt file".format(args.txt_gene_name)
 
-        out_fh.write("\t".join(header) + "\t" + args.out_consplice_col + "\n")
+        out_fh.write("#" + "\t".join(header) + "\t" + args.out_consplice_col + "\n")
 
         for line in fh:
             
@@ -196,7 +196,7 @@ def add_conSplice_score(parser, args):
             pos = int(line_dict[args.txt_pos])
 
             ## Get ConSplice score
-            var_score = "NA"
+            var_score = float("NaN")
 
             consplice_scores = list(consplice_interlap[str(chrom)].find((pos,pos)))
 
@@ -205,15 +205,19 @@ def add_conSplice_score(parser, args):
 
             elif args.score_type == "by-gene":
                 
-                gene_name = line_dict[args.txt_gene_name]
+                gene_name = line_dict[args.txt_gene_name].strip()
 
                 score_list = []
                 for score in consplice_scores:
                     
+                    ## Update the alt_symbol_dict with the current gene. (Some genes may not be included in the alt symbol file) 
+                    alt_symbol_dict[score[3]].add(score[3])
+
                     if gene_name in alt_symbol_dict[score[3]]:
                         
                         score_list.append(score[2])
-                
+
+
                 var_score = max(score_list) if len(score_list) > 0 else var_score 
 
             line_list.append(str(var_score))
