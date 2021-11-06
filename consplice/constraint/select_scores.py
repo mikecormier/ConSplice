@@ -19,9 +19,9 @@ def add_select_score(sub_p):
     p = sub_p.add_parser("select-score",
                          help = "Select an O/E and matching Percentile score to filter on and remove all other non-essential columns after ConSplice scoring",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description=("\n\t**************************\n"
-                                      "\t* Select ConSplice Score *\n"
-                                      "\t**************************\n\n"
+                         description=("\n\t****************************\n"
+                                      "\t* ConSplice - Select Score *\n"
+                                      "\t****************************\n\n"
                                       "\tReduce unnecessary columns in the scored ConSplice file by filter\n"
                                       "\tout non-essential columns while keeping the desired O/E and Percentile\n"
                                       "\tConSplice scores.\n"
@@ -85,9 +85,9 @@ def add_select_score(sub_p):
 
 def select_scores(parser, args):
 
-    print("\n\t**************************")
-    print("\t* Select ConSplice Score *")
-    print("\t**************************\n\n")
+    print("\n\t****************************")
+    print("\t* ConSplice - Select Score *")
+    print("\t****************************\n\n")
 
 
     print(("\nInput Arguments:"
