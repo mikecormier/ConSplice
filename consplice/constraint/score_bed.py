@@ -3,6 +3,7 @@ import sys
 import io
 import os
 import argparse 
+import gzip
 from Bio.bgzf import BgzfWriter
 from .utils import extract_constraint_score, get_alternative_gene_symbols
 
@@ -16,20 +17,23 @@ def add_score_bed(sub_p):
     p = sub_p.add_parser("score-bed",
                          help = "Add ConSplice scores to a bed variant file",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description=("\n\t****************************\n"
-                                      "\t* Score bed with ConSplice *\n"
-                                      "\t****************************\n\n"
+                         description=("\n\t*************************\n"
+                                      "\t* ConSplice - Score bed *\n"
+                                      "\t*************************\n\n"
                                       "\tScore a 0-based variant file in bed format with ConSplice scores\n"
                                       "\t - Expecting a tab delimited file with a header line that start with a #\n"
-                                      "\t - Only a single header line is allowed\n"
+                                      "\t - The last header line with a # will be treated as a column index based\n"
+                                      "\t    on the tab seperated names in that line.\n"
                                       "\t - The variant position will be treated as 0-based genomic position\n"
-                                      "\t - The ConSplice score will be assigned by either a gene name if \n"
-                                      "\t   provided by the user, or the max ConSplice score for that position.\n"
+                                      "\t - The ConSplice score will be assigned by either a gene name or the \n"
+                                      "\t    max ConSplice score for that position based on input parameters.\n"
+
 
                          )
     )
 
     req = p.add_argument_group("Required Arguments")
+    rif = p.add_argument_group("Required if by-gene")
     req.add_argument(
         "--consplice-file",
         metavar = "ConSplice Score bed File", 
@@ -86,7 +90,7 @@ def add_score_bed(sub_p):
         help="The name for the gene name/symbol column in the bed file. (Default = gene_name) (NOTE: Expecting tab delimited file with a header line)"
     )
 
-    p.add_argument(
+    rif.add_argument(
         "--alt-gene-symbol",
         metavar = "Alternative Gene Symbol File",
         default = "NA",
@@ -117,9 +121,9 @@ def add_score_bed(sub_p):
 
 def add_conSplice_score(parser, args):
 
-    print("\n\n\t****************************")
-    print("\t* Score bed with ConSplice *")
-    print("\t****************************\n\n")
+    print("\n\n\t*************************")
+    print("\t* ConSplice - Score bed *")
+    print("\t*************************\n\n")
 
 
     outfile = args.out_file
@@ -173,6 +177,41 @@ def add_conSplice_score(parser, args):
         ## Get a dictionary of alternative gene symbols
         alt_symbol_dict = get_alternative_gene_symbols(args.alt_gene_symbol)
 
+    print("\nChecking for header in variant file")
+    header = []
+    h_index = 0
+
+    try:
+        fh = gzip.open(args.bed_file, "rt", encoding = "utf-8") if args.bed_file.endswith(".gz") else io.open(args.bed_file, "rt", encoding = "utf-8")
+    except IOError as e:
+        print("\n!!ERROR!! Unable to read bed file\n")
+        print(str(e))
+        sys.exit(1)
+
+    header_line = fh.readline()
+
+    assert header_line[0] == "#", "\n!!ERROR!! the first line of the bed file should be a header line with a # starting the header" 
+
+    header = header_line.replace("#","").strip().split("\t")
+
+    ## Iterate over the file until the header lines starting with a # are done
+    for line in fh:
+        
+        if line[0] == "#":
+            header = line.replace("#","").strip().split("\t")
+        else:
+            break
+
+        ## update header index
+        h_index += 1
+
+    fh.close()
+
+    assert args.bed_chrom in header, "\n!!ERROR!! the '{}' chrom column is not in the bed file".format(args.bed_chrom)
+    assert args.bed_pos in header, "\n!!ERROR!! the '{}' position column is not in the bed file".format(args.bed_pos)
+
+    if args.score_type == "by-gene":
+        assert args.bed_gene_name in header, "\n!!ERROR!! the '{}' gene name column is not in the bed file".format(args.bed_gene_name)
 
     print("\nLoading ConSplice scores into an interval tree")
 
@@ -185,67 +224,61 @@ def add_conSplice_score(parser, args):
 
 
     print("\nParsing variant file and adding ConSplice scores")
-    with io.open(args.bed_file, "rt", encoding = "utf-8") as fh:
-        
-        ## Open output file
-        try:
-            out_fh = io.open(outfile, "w") if args.out_type == "bed" else BgzfWriter(outfile, "wb")  
 
-        except IOError as e:
-            print(str(e))
-            sys.exit(1)
-        header_line = fh.readline()
+    ## Open files
+    try:
+        fh = gzip.open(args.bed_file, "rt", encoding = "utf-8") if args.bed_file.endswith(".gz") else io.open(args.bed_file, "rt", encoding = "utf-8")
+        out_fh = io.open(outfile, "w") if args.out_type == "bed" else BgzfWriter(outfile, "wb")  
+    except IOError as e:
+        print("\n!!ERROR!! Unable to open file\n")
+        print(str(e))
+        sys.exit(1)
 
-        print("\nChecking header of the variant bed file")
-        assert header_line[0] == "#", "\n!!ERROR!! the first line of the bed file should be a header line with a # starting the header" 
+    ## iterate over each variant in the file
+    for i,line in enumerate(fh):
 
-        header = header_line.replace("#","").strip().split("\t")
+        ## Write the header lines 
+        if line[0] == "#":
+            line = line.strip() + "\t{}\n".format(args.out_consplice_col) if i == h_index else line
+            out_fh.write(line)
+            continue
 
-        assert args.bed_chrom in header, "\n!!ERROR!! thet '{}' chrom column is not in the bed file".format(args.bed_chrom)
-        assert args.bed_pos in header, "\n!!ERROR!! thet '{}' position column is not in the bed file".format(args.bed_pos)
-        assert args.bed_gene_name in header, "\n!!ERROR!! thet '{}' gene name column is not in the bed file".format(args.bed_gene_name)
+        line_list = line.strip().split("\t")
+        line_dict = dict(zip(header, line_list))
 
-        out_fh.write("#" + "\t".join(header) + "\t" + args.out_consplice_col + "\n")
 
-        for line in fh:
+        chrom = line_dict[args.bed_chrom].replace("chr","")
+        pos = int(line_dict[args.bed_pos])
+
+        ## Get ConSplice score
+        var_score = float("NaN")
+
+        consplice_scores = list(consplice_interlap[str(chrom)].find((pos,pos)))
+
+        if args.score_type == "max":
+            var_score = max([float(x[2]) for x in consplice_scores])
+
+        elif args.score_type == "by-gene":
             
-            assert line[0] != "#", "\n!!ERRORR!! too many header lines in the bed file. Only the first line should be a header line"
+            gene_name = line_dict[args.bed_gene_name].strip()
 
-
-            line_list = line.strip().split("\t")
-            line_dict = dict(zip(header, line_list))
-
-
-            chrom = line_dict[args.bed_chrom].replace("chr","")
-            pos = int(line_dict[args.bed_pos])
-
-            ## Get ConSplice score
-            var_score = float("NaN")
-
-            consplice_scores = list(consplice_interlap[str(chrom)].find((pos,pos)))
-
-            if args.score_type == "max":
-                var_score = max([float(x[2]) for x in consplice_scores])
-
-            elif args.score_type == "by-gene":
+            score_list = []
+            for score in consplice_scores:
                 
-                gene_name = line_dict[args.bed_gene_name].strip()
-
-                score_list = []
-                for score in consplice_scores:
+                if gene_name in alt_symbol_dict[score[3]]:
                     
-                    if gene_name in alt_symbol_dict[score[3]]:
-                        
-                        score_list.append(score[2])
-                
-                var_score = max(score_list) if len(score_list) > 0 else var_score 
+                    score_list.append(score[2])
+            
+            var_score = max(score_list) if len(score_list) > 0 else var_score 
 
 
-            line_list.append(str(var_score))
+        line_list.append(str(var_score))
 
-            out_fh.write("\t".join(line_list) + "\n")
+        out_fh.write("\t".join(line_list) + "\n")
 
-        out_fh.close()
+    fh.close()
+    out_fh.close()
+
 
     print("\nConSplice scores added to '{}' output file under the '{}' column name".format(outfile, args.out_consplice_col))
 
