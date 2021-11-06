@@ -138,14 +138,8 @@ def create_interlap_object(df,
     ## Create a dictionary that will constraint interlap objects per chromosome
     interlap_dict = defaultdict(InterLap)
     
-    ## progress bar
-    pbar = tqdm(total = df.shape[0])
-    pbar.set_description("Progress")
-
     ## Iterate over the dataframe by row
     for row in df.itertuples():
-
-        pbar.update(1)
 
         ## Add row contents to the chromosome specific interlap object
         interlap_dict[getattr(row,chrom_col)].add((int(getattr(row,start_col)),
@@ -158,12 +152,10 @@ def create_interlap_object(df,
                                                    getattr(row,gene_symbol_col), 
                                                    getattr(row,score_col)))
 
-    pbar.close()
-
     return(interlap_dict)
         
 
-def aggregate_intersecting_regions(chrom, start_pos, end_pos, strand, symbol, step_size, interlap_dict):
+def aggregate_intersecting_regions(chrom, start_pos, end_pos, strand, symbol, step_size, interlap_dict, agg_type):
     """
     aggregate_intersecting_regions
     ==============================
@@ -181,6 +173,7 @@ def aggregate_intersecting_regions(chrom, start_pos, end_pos, strand, symbol, st
     5) symbol:        (str)  The gene symbol for the region or gene
     6) step_size:     (int)  The size of regions to create accross the gene/region
     7) interlap_dict: (dict) A dictionary of interlap objects created from the 'create_interlap_object' method
+    8) agg_type       (str)  The aggregation type. (mean or median)
 
     Returns:
     ++++++++
@@ -215,7 +208,7 @@ def aggregate_intersecting_regions(chrom, start_pos, end_pos, strand, symbol, st
                 gene_id = intersect[6] if gene_id == "" else gene_id
 
         if o_over_e_values:
-            new_regions.append([chrom, temp_start, temp_end, tx_start, tx_end, strand, tx_id, gene_id, symbol, step_size, np.mean(o_over_e_values)]) 
+            new_regions.append([chrom, temp_start, temp_end, tx_start, tx_end, strand, tx_id, gene_id, symbol, step_size, np.mean(o_over_e_values) if agg_type == "mean" else np.median(o_over_e_values)]) 
 
         temp_start += step_size
         temp_end = temp_start + (step_size - 1)
@@ -240,7 +233,7 @@ def aggregate_intersecting_regions(chrom, start_pos, end_pos, strand, symbol, st
                     new_end = intersect[1]
 
         if o_over_e_values:
-            new_regions.append([chrom, temp_start, new_end, tx_start, tx_end, strand, tx_id, gene_id, symbol, step_size, np.mean(o_over_e_values)]) 
+            new_regions.append([chrom, temp_start, new_end, tx_start, tx_end, strand, tx_id, gene_id, symbol, step_size, np.mean(o_over_e_values) if agg_type == "mean" else np.median(o_over_e_values)]) 
 
     return(new_regions)
 
@@ -251,10 +244,6 @@ def aggregate_intersecting_regions(chrom, start_pos, end_pos, strand, symbol, st
 
 def agg_overlapping_regions(parser, args):
 
-
-    print("\nCHECK THAT THIS WORKS WITH THE UPDATED REGIONA O/E CALCULATOR WHERE REGOINS ARE OFFSET BY 1\n\n")
-
-    print("\nNOTE: --agg-type not yet implemented. update this!!!\n")
 
     print("\n\t***************************************")
     print("\t* Aggregate Overlapping Region Scores *")
@@ -310,18 +299,11 @@ def agg_overlapping_regions(parser, args):
 
     print("\n> Aggregating regions by step size: {}".format(args.step_size))
 
-    ## Progress bar
-    pbar = tqdm(total = ngenes)
-    pbar.set_description("Progress")
-
     ## Iterate over each gene and get the new step size regions with the aggergated score
     step_regions = []
     for i,row in enumerate(scores_df.groupby(["gene_id","transcript_id"]).first().itertuples()):
 
-        pbar.update(1)
-        step_regions.extend(aggregate_intersecting_regions(chrom = row.Chromosome, start_pos = int(row.txStart), end_pos = int(row.txEnd), strand = row.strand, symbol = row.gene_symbol, step_size = int(args.step_size), interlap_dict = inter_dict))
-
-    pbar.close()
+        step_regions.extend(aggregate_intersecting_regions(chrom = row.Chromosome, start_pos = int(row.txStart), end_pos = int(row.txEnd), strand = row.strand, symbol = row.gene_symbol, step_size = int(args.step_size), interlap_dict = inter_dict), agg_type = args.agg_type)
 
     ## Create new dataframe
     print("\n> Combining all regions")
