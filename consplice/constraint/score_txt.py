@@ -30,7 +30,7 @@ def add_score_txt(sub_p):
     )
 
     req = p.add_argument_group("Required Arguments")
-    rif = p.add_argument_group("Required if by-gene")
+    rif = p.add_argument_group("Required if using 'by-gene'")
     req.add_argument(
         "--consplice-file",
         metavar = "ConSplice Score bed File", 
