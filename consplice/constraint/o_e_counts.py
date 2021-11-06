@@ -27,9 +27,9 @@ def add_o_e_counts(sub_p):
     p = sub_p.add_parser("oe-counts",
                          help = "Calculate Observed and Expected splicing variant counts for genic or intragenic regions of genes",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description = ("\n\t********************************\n"
-                                        "\t* Observed and Expected Counts *\n"
-                                        "\t********************************\n\n"
+                         description = ("\n\t********************************************\n"
+                                        "\t* ConSplice - Observed and Expected Counts *\n"
+                                        "\t********************************************\n\n"
                                         "\tCalculate the Observed (O) splicing variation from genetic"
                                         "\n\tvariation in gnomAD, and calculate the Expected (E)"
                                         "\n\tsplicing variation using a matrix of Substitution"
@@ -1032,9 +1032,9 @@ def o_e_counts(parser, args):
     Main method used to control the calculation of the Observed and Expected counts for the ConSplice Model.
     """
 
-    print("\n\n\t********************************")
-    print("\t* Observed and Expected Counts *")
-    print("\t********************************\n\n")
+    print("\n\n\t********************************************")
+    print("\t* ConSplice - Observed and Expected Counts *")
+    print("\t********************************************\n\n")
 
     start_time = time.time()
 
