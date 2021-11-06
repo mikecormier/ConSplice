@@ -30,9 +30,9 @@ def main(args=None):
     parser = argparse.ArgumentParser(
         prog="ConSplice", 
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description = ("\n\t===================================================\n"
-                       "\t| ConSplice-CLI: The CLI to the ConSplice project |\n"
-                       "\t===================================================\n\n "
+        description = ("\n\t=====================================================\n"
+                       "\t|| ConSplice-CLI: The CLI to the ConSplice project ||\n"
+                       "\t=====================================================\n\n"
                        "\t(1) Score/Annotate variants using the ConSpliceML model to identify potential pathogenic clinically relevant alternative splicing variants." 
                        "\n\t(2) Train a Random Forest model for deleterious splicing prediction and interpritation utilizing the constrained splicing model."
                        "\n\t(3) Generate genic or regional splicing constraint profiles.") 
