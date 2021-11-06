@@ -38,6 +38,8 @@ pathogenic interpritation model of constraint, we can improve both the identific
 
 Both SpliceAI and SQUIRLS are used to support alternative splicing predictions, as well as identify alternative splicing events missed by one of the tools. 
 
+> **_NOTE:_** For now, the ConSpliceML model requires ConSplice, SpliceAI, and SQUIRLS scores as parameters to train and score the model. In later versions the number of features in the vector will be dynamic based on user input. 
+
 
 ## ConSplice Module 
 
