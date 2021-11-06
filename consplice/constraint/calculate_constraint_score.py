@@ -39,9 +39,9 @@ def add_constraint_scores(sub_p):
     p = sub_p.add_parser("calculate-oe",
                          help = "Calculate the O/E and Percentile constraint scores",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description=("\n\t*****************************************\n"
-                                      "\t* O/E and Percentile Constraint Scoring *\n"
-                                      "\t*****************************************\n\n"
+                         description=("\n\t******************************************\n"
+                                      "\t* ConSplice - O/E and Percentile Scoring *\n"
+                                      "\t******************************************\n\n"
                                       "\tCalculate the Observed over Expected (O/E) score and\n"
                                       "\tthe Percentile constraint scores for each constraint region\n\n"
                                       "\t - The percentile score is calculated after all regions have an O/E score\n"
@@ -391,9 +391,9 @@ def get_weights(mutation_table):
 def constraint_scores(parser, args):
     global delta_score_bins 
 
-    print("\n\n\t*****************************************")
-    print("\t* O/E and Percentile Constraint Scoring *")
-    print("\t****************************************\n\n")
+    print("\n\n\t******************************************")
+    print("\t* ConSplice - O/E and Percentile Scoring *")
+    print("\t******************************************\n\n")
 
 
     print(("\nInput Arguments:"
