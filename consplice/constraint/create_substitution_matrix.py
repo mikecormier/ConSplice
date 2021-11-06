@@ -26,7 +26,9 @@ def add_substitution_matrix(sub_p):
     p = sub_p.add_parser("sub-matrix",
                          help = "Build a substitution matrix using gnomAD variants and SpliceAI scores",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description = ("\n\t***********************\n\t* Substitution Matrix *\n\t***********************\n\n"
+                         description = ("\n\t***********************************\n"
+                                        "\t* ConSplice - Substitution Matrix *\n"
+                                        "\t***********************************\n\n"
                                         "\tCreate a splicing-aware substitution matrix"
                                         "\n\tfrom variation in gnomAD combined with per-"
                                         "\n\tnucleotide splicing predictions from SpliceAI."
