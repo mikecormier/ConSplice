@@ -17,9 +17,9 @@ def add_score_vcf(sub_p):
     p = sub_p.add_parser("score-vcf",
                          help = "Add ConSplice scores to a vcf file",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description=("\n\t****************************\n"
-                                      "\t* Score vcf with ConSplice *\n"
-                                      "\t****************************\n\n"
+                         description=("\n\t*************************\n"
+                                      "\t* ConSplice - Score vcf *\n"
+                                      "\t*************************\n\n"
                                       "\tScore a valid vcf file with ConSplice scores\n"
                                       "\t - Each variant is treated as an SNV using the\n"
                                       "\t   variant position rather the the genomic range\n"
@@ -78,9 +78,9 @@ def add_score_vcf(sub_p):
 
 def add_conSplice_score(parser, args):
 
-    print("\n\n\t****************************")
-    print("\t* Score vcf with ConSplice *")
-    print("\t****************************\n\n")
+    print("\n\n\t*************************")
+    print("\t* ConSplice - Score vcf *")
+    print("\t*************************\n\n")
 
 
 
