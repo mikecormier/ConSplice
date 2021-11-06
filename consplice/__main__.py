@@ -107,9 +107,9 @@ def main(args=None):
 
     add_constraint_scores(sub_con)
 
-    add_aggregate_overlapping_regions(sub_con)
-
     add_select_score(sub_con)
+
+    add_aggregate_overlapping_regions(sub_con)
 
     add_to_bed(sub_con)
 
