@@ -13,3 +13,4 @@ gsort
 bcftools
 htslib
 biopython
+scikit-learn
