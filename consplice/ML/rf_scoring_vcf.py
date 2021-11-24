@@ -20,7 +20,7 @@ from .ml_utils import ConSpliceML_score, trained_model, ml_info_file,  get_alter
 
 def add_ml_scoring_vcf(sub_p):
 
-    p = sub_p.add_parser("score",
+    p = sub_p.add_parser("score-vcf",
                          help = "Score variants using ConSpliceML",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
                          description = ("\n\t*****************************\n"
@@ -305,24 +305,4 @@ def rf_score_vcf(parser, args):
     print("\nVariants in the VCF file have been scored by ConSpliceML and saved as '{}'".format(outfile))
         
     print("\nDONE")
-
-
-
-    
-
-
-'''
-
-    before scoring, need to convert the feature names into the names used to created the modle. Example: ConSplice_score -> 50bp_ConSplice, SpliceAI -> MAX_SpliceAI, etc.
-
-    Best way to do this is to keep a yaml file with the info in it. 
-
-
-    
-    rf = joblib.load('/scratch/ucgd/lustre-work/quinlan/u1138933/Projects/ConSplice/results/regional_results/ConSpliceML_Model/trained_ConSpliceML.rf')
-
-    rf.predict_proba(df)[:,1]
-
-'''
-
 
