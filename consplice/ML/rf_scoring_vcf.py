@@ -26,11 +26,11 @@ def add_ml_scoring_vcf(sub_p):
                          description = ("\n\t*****************************\n"
                                         "\t** ConSpliceML - score-vcf **\n"
                                         "\t*****************************\n\n"
-                                        "\tScore a vcf file using the trained ConSpliceML model"
-                                        "\tNOTE: The vcf file needs to be annotated with the"
-                                        "\t      required splicing scores: SpliceAI, SQUIRLS, and"
-                                        "\t      ConSplice. This process will fail if these annotation"
-                                        "\t      are missing from the INFO field of the vcf file."
+                                        "\tScore a vcf file using the trained ConSpliceML model\n"
+                                        "\tNOTE: The vcf file needs to be annotated with the\n"
+                                        "\t      required splicing scores: SpliceAI, SQUIRLS, and\n"
+                                        "\t      ConSplice. This process will fail if these annotation\n"
+                                        "\t      are missing from the INFO field of the vcf file.\n"
                                        ),
     )
 
