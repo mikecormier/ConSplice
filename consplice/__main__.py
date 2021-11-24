@@ -4,7 +4,7 @@ import os
 
 from .__init__ import __version__, __cur_path__
 from .ML.rf_training import add_training
-from .ML.rf_scoring import add_ml_scoring
+from .ML.rf_scoring_vcf import add_ml_scoring_vcf
 from .constraint.create_substitution_matrix import add_substitution_matrix
 from .constraint.o_e_counts import add_o_e_counts
 from .constraint.calculate_constraint_score import add_constraint_scores
@@ -94,7 +94,7 @@ def main(args=None):
 
     add_training(sub_ml)
 
-    add_ml_scoring(sub_ml)
+    add_ml_scoring_vcf(sub_ml)
 
 
 
@@ -120,12 +120,9 @@ def main(args=None):
     add_score_vcf(sub_con)
 
 
-
     ## Initate argparse
     args = parser.parse_args(args)
     args.func(parser, args)
-
-
 
 
 if __name__ == "__main__":
