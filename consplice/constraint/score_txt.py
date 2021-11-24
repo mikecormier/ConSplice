@@ -15,9 +15,9 @@ def add_score_txt(sub_p):
     p = sub_p.add_parser("score-txt",
                          help = "Add ConSplice scores to a tab-delimited txt variant file",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description=("\n\t********************************************\n"
-                                      "\t* ConSplice - Score tab-delimited txt with *\n"
-                                      "\t********************************************\n\n"
+                         description=("\n\t***************************************\n"
+                                      "\t* ConSplice - Score tab-delimited txt *\n"
+                                      "\t***************************************\n\n"
                                       "\tScore a 1-based variant file in tab-delimited txt format with ConSplice scores\n"
                                       "\t - Expecting a tab delimited file with a header line that start with a #\n"
                                       "\t - The last header line with a # will be treated as a column index based\n"
@@ -103,10 +103,6 @@ def add_score_txt(sub_p):
     p.set_defaults(func=add_conSplice_score)
 
 
-
-
-
-
 #---------------------------------------------------------------------------------------------------------------------------------
 ## Main
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -187,6 +183,8 @@ def add_conSplice_score(parser, args):
         if args.score_type == "by-gene":
             assert args.txt_gene_name in header, "\n!!ERROR!! the '{}' gene name column is not in the txt file".format(args.txt_gene_name)
 
+    if os.path.exists(args.out_file):
+        print("\n\n**WARNING** The output file '{}' already exists. This file will be overwritten. To halt this process press CTRL+C\n".format(args.out_file)) 
 
     print("\nLoading ConSplice scores into an interval tree")
 

@@ -67,10 +67,6 @@ def add_score_vcf(sub_p):
     p.set_defaults(func=add_conSplice_score)
 
 
-
-
-
-
 #---------------------------------------------------------------------------------------------------------------------------------
 ## Main
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -83,7 +79,7 @@ def add_conSplice_score(parser, args):
     print("\t*************************\n\n")
 
 
-
+    ## Check output file
     outfile = args.out_file
     if not args.out_file.endswith("vcf") and args.out_type == "vcf":
         outfile = args.out_file + ".vcf"
@@ -119,6 +115,9 @@ def add_conSplice_score(parser, args):
     assert os.path.exists(args.consplice_file), "\n!!ERROR!! The ConSplice Score file does not exists"
     assert os.path.exists(args.vcf_file), "\n!!ERROR!! The vcf file does not exists"
 
+    if os.path.exists(outfile):
+        print("\n\n**WARNING** The output file '{}' already exists. This file will be overwritten. To halt this process press CTRL+C\n".format(outfile)) 
+
 
     print("\nLoading ConSplice scores into an interval tree")
 
@@ -129,14 +128,13 @@ def add_conSplice_score(parser, args):
                                                   score_col  = args.consplice_col,
                                                   zero_based = True if args.consplice_file.endswith(".bed") or args.consplice_file.endswith("bed.gz") else False)
 
-
     print("\nParsing vcf file and adding ConSplice scores")
 
     ## Open vcf file
     vcf = VCF(args.vcf_file)
 
     ## Add ConSplice to header
-    vcf.add_info_to_header({"ID": "ConSplice", "Description": "The ConSplice percentile score annotation. Format: Gene_Name|ConSplice_Score", "Type": "Float", "Number": "."})
+    vcf.add_info_to_header({"ID": "ConSplice", "Description": "The ConSplice percentile score annotation. Scores from: '{}'. Format: Gene_Name|ConSplice_Score".format(os.path.basename(args.consplice_file)), "Type": "String", "Number": "."})
 
     ## Open vcf writer
     scored_vcf = (Writer(outfile, vcf, "w") if args.out_type == "vcf" 

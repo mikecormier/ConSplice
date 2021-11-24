@@ -177,6 +177,9 @@ def add_conSplice_score(parser, args):
         ## Get a dictionary of alternative gene symbols
         alt_symbol_dict = get_alternative_gene_symbols(args.alt_gene_symbol)
 
+    if os.path.exists(outfile):
+        print("\n\n**WARNING** The output file '{}' already exists. This file will be overwritten. To halt this process press CTRL+C\n".format(outfile)) 
+
     print("\nChecking for header in variant file")
     header = []
     h_index = 0
