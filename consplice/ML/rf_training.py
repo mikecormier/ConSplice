@@ -22,7 +22,9 @@ def add_training(sub_p):
     p = sub_p.add_parser("train",
                          help = "Train a Random Forest model using ConSplice.",
                          formatter_class=argparse.RawDescriptionHelpFormatter,
-                         description = ("\n\t************************\n\t* ConSpliceML Training *\n\t************************\n\n"
+                         description = ("\n\t****************************\n"
+                                        "\t** ConSpliceML - Training **\n"
+                                        "\t****************************\n\n"
                                         "\tTrain a Random Forest using the regional ConSplice model,"
                                         "\n\tSpliceAI alternative splicing prediction scores, and"
                                         "\n\tSQUIRLS alternative splicing prediction scores."
@@ -218,6 +220,7 @@ def rf_training(parser, args):
 
     ## Save meta info to yaml file in the Model directory 
     info_dict = {"Features":{"ConSplice":args.consplice_col,"SpliceAI":args.spliceai_col,"SQUIRLS":args.squirls_col},
+                 "Feature Order":["ConSplice","SpliceAI","SQUIRLS"],
                  "Random State":args.random_state,
                  "N Decision Trees":args.n_dt,
                  "Patho dataset": args.patho_set,
@@ -225,7 +228,7 @@ def rf_training(parser, args):
                  "N patho samples": combined_df.loc[combined_df[patho_label] == 1].shape[0],
                  "N benign samples": combined_df.loc[combined_df[patho_label] == 0].shape[0],
                  "Saved Model": trained_model,
-                 "Saved Path": os.path.join(output_dir, trained_model),
+                 "Saved Path": os.path.join(os.path.abspath(output_dir), trained_model),
                  "Date Created": datetime.datetime.now().strftime("%m-%d-%Y")}
 
     with open(os.path.join(output_dir, ml_info_file), "w", encoding = "utf-8") as fh:
