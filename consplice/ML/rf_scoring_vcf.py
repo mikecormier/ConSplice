@@ -212,9 +212,9 @@ def rf_score_vcf(parser, args):
     ## Iterate over variants
     print("\nParsing vcf file and using ConSpliceML to score variants")
     for var in vcf:
-        
+
         ##Don't try to score variants that are missing a SpliceAI score, a SQUIRLS score, or a ConSplice score
-        if var.INFO["SpliceAI"] is None or var.INFO["SQUIRLS_SCORE"] is None or var.INFO["ConSplice"] is None:
+        if var.INFO.get("SpliceAI") is None or var.INFO.get("SQUIRLS_SCORE") is None or var.INFO.get("ConSplice") is None:
             scored_vcf.write_record(var)
             continue
 
