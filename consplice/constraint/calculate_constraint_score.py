@@ -101,9 +101,9 @@ def add_constraint_scores(sub_p):
 
     p.add_argument(
         "--spliceai-score-type",
-        choices = ["max","sum"],
+        choices = ["max","sum","splicing_unaware"],
         default = "sum",
-        help = "(Optional) How to use the SpliceAI score. Choices = 'max' or 'sum'. 'max' will use the max SpliceAI score for a specific variant. 'sum' will use the sum SpliceAI score for a specific variant. Defulat = 'sum'"
+        help = "(Optional) How to use the SpliceAI score. Choices = 'max', 'sum', 'splicing_unaware'. 'max' will use the max SpliceAI score for a specific variant. 'sum' will use the sum SpliceAI score for a specific variant. 'splicing_unaware' will use a single bin for SpliceAI, which is the same as an unaware splicing model. Defulat = 'sum'"
     )
 
     p.set_defaults(func=constraint_scores)
@@ -432,6 +432,10 @@ def constraint_scores(parser, args):
 
     elif args.spliceai_score_type == "sum":
         delta_score_bins = config_dict["SCORE_BINS"]["sum_spliceai_score_bins"]  
+        SAI_SCORE_TYPE = "sum"
+
+    elif args.spliceai_score_type == "splicing_unaware":
+        delta_score_bins = config_dict["SCORE_BINS"]["one_sum_spliceai_score_bin"]  
         SAI_SCORE_TYPE = "sum"
 
     set_global_vars()
