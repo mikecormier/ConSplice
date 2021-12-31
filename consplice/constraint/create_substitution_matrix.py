@@ -141,9 +141,9 @@ def add_substitution_matrix(sub_p):
 
     p.add_argument(
         "--spliceai-score-type",
-        choices = ["max","sum"],
+        choices = ["max","sum","splicing_unaware"],
         default = "sum",
-        help = "(Optional) How to use the SpliceAI score. Choices = 'max' or 'sum'. 'max' will use the max SpliceAI score for a specific variant. 'sum' will use the sum SpliceAI score for a specific variant. Defulat = 'sum'"
+        help = "(Optional) How to use the SpliceAI score. Choices = 'max', 'sum', 'splicing_unaware'. 'max' will use the max SpliceAI score for a specific variant. 'sum' will use the sum SpliceAI score for a specific variant. 'splicing_unaware' will use a single bin for SpliceAI, which is the same as an unaware splicing model. Defulat = 'sum'"
     )
 
     p.set_defaults(func=substitution_matrix)
@@ -211,6 +211,11 @@ def load_config_file(config_path, chrom_list, spliceai_score_type):
 
     elif spliceai_score_type == "sum":
         delta_score_bins = config_dict["SCORE_BINS"]["sum_spliceai_score_bins"]  
+        SAI_SCORE_TYPE = "sum"
+
+    elif spliceai_score_type == "splicing_unaware":
+        delta_score_bins = config_dict["SCORE_BINS"]["one_sum_spliceai_score_bin"]  
+        SCORE_TYPE = "sum"
         SAI_SCORE_TYPE = "sum"
 
     print("\n  SpliceAI score bins:\n  --------------------\n\t- {}".format("\n\t- ".join(delta_score_bins)))
