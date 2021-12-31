@@ -21,6 +21,9 @@ SCORE_BINS:
         - "0.6-0.8"
         - "0.8-1.0"
 
+    one_sum_spliceai_score_bin:
+        - "0.0-4.0"
+
 PAR:
     GRCh37:
         NOTE: "BUILD = GRCh37. The X chromosome Pseudoautosomal Regions (PAR). The start positions in this dict for each PAR is 0-based"
