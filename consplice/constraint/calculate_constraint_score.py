@@ -100,6 +100,15 @@ def add_constraint_scores(sub_p):
     )
 
     p.add_argument(
+        "--weights",
+        metavar = "Weights",
+        choices = ["unweighted","linear","PHRED","One_minus_proportion","One_over_proportion","One_over_mutation_rate"],
+        default = ["unweighted"],
+        nargs = "+",
+        help = "The weights to apply when calculating the O/E scores. Options = 'unweighted', 'linear', 'PHRED', 'One_minus_proportion', 'One_over_proportion', and 'One_over_mutation_rate'. Using 'unweighted' results in no weights being applied (Default). 'linear' uses a linear weighting approached based on SpliceAI binning. 'PHRED' transforms the by bin proportions into PHRED scores and weights. 'One_minus_proportion' uses a normalized to 1 proportion for each bin as a weight. 'One_over_proportion' uses the inverse proportion of each bin as a weight. 'One_over_mutation_rate' uses the inverse mutation rate for each bin as weight. Default is 'unweighted'. Add as many weights as desired. (Example: --weights linear PHRED one_over_prop unweighted)"
+    )
+
+    p.add_argument(
         "--spliceai-score-type",
         choices = ["max","sum","splicing_unaware"],
         default = "sum",
@@ -199,18 +208,16 @@ def old_convert_scores_to_percentiles(query_df, score_column, invert_percentiles
     return(percentile_list)
 
 
-def calculate_o_over_e(lined, observed_column_suffix, expected_column_suffix, one_exon_mean = 60, weight_dict = {}, col_list = []):
+def calculate_o_over_e(lined, observed_column_suffix, expected_column_suffix, one_exon_mean = 60, weight_dict = {}, col_list = [], weights = set()):
     """
     calculate_o_over_e
     ===================
-    Method to calculate the Observed over Expected (O/E) score for a specific region, a row in a pandas data frame, based on 
+    Method to calculate the Observed over Expected (O/E) score for a specific region, based on 
      the observed scores and expected scores split across different reference allele delta bins. 
-
-    NOTE: This method is set up to be used as the function input when running a pandas data frame apply function.
 
     Detal bins: bins that represent different delta scores by which the O and E scores are seperated/binned by. (Splice AI Delta bins)
 
-    Reference Allele: Each detal bin is further seperated by the reference allele. That is, for each delta bin category there are four 
+    Reference Allele: Each bin is further seperated by the reference allele. That is, for each delta bin category there are four 
      bin scores based on the a reference allele of A, C, G, and T.
 
 
@@ -224,30 +231,29 @@ def calculate_o_over_e(lined, observed_column_suffix, expected_column_suffix, on
 
     Parameters:
     -----------
-    1) df_row:    (Pandas DataFrame)  A row from a pandas data frame. (Usually from a pandas .apply function)
+    1) lined:                 (dict)  A dictionary that represnts the contents of a line in a file 
     2) observed_column_suffix: (str)  The suffix of the column that represents the observed counts in the pandas data frame
     3) expected_column_suffix: (str)  The suffix of the column that represents the expected counts in the pandas data frame
     4) one_exon_mean:          (int)  The mean value to set for the distribution of regions with a single exon. (Default = 60)
-    5) weight_class:           (str)  The weigthing class to use. Must be on of: "unweighted","linear","PHRED","One_minus_proportion","One_over_proportion","One_over_mutation_rate"  
-    7) weight_dict:           (dict)  A 2d dictionary with keys as a weight class, values as the Weights for that class based on delta bin and ref.
+    5) weight_dict:           (dict)  A 2d dictionary with keys as a weight class, values as the Weights for that class based on delta bin and ref.
+    6) col_list:              (list)  A list of column names associated with the weights 
+    7) weights:                (set)  A set of weights to use. 
 
     Returns:
     ++++++++
     1) (float) The Observed / Expected (O/E) score for the current region (pandas data frame row)
     """
 
-    ## Check the weight class
-#    if weight_class not in allowed_weight_classes:
-#        print("!!ERROR!! The '{}' weighting class is not allowed. Please use one of: \n\t{}".format(", ".join(allowed_weight_class)))
-#        sys.exit(1)
-
     ## Get the Observed and Expected counts for each reference allele specific detal bin
-    o_over_e_scores = [[] for _ in range(len(allowed_weight_classes))]
+    allowed_weights = [x for x in allowed_weight_classes if x in weights]
+    o_over_e_scores = [[] for _ in range(len(allowed_weights))]
+
     for delta_bin in by_ref_delta_score_bins:
         expected = float(lined["{}_{}".format(delta_bin, expected_column_suffix)])
         observed = float(lined["{}_{}".format(delta_bin, observed_column_suffix)])
 
-        for weight_index, weight_class in enumerate(allowed_weight_classes):
+        ## Iterate over each weight class. Skip any weights not designated by the user
+        for weight_index, weight_class in enumerate(allowed_weights):
 
             ## Identify the weight to apply
             weight = (1 if weight_class == "unweighted" else 
@@ -266,7 +272,7 @@ def calculate_o_over_e(lined, observed_column_suffix, expected_column_suffix, on
         lined[col_list[i]] = (sum(score)  + one_exon_mean) if float(lined["max_exon_number"]) <= 1 else sum(score) 
 
 
-def get_weights(mutation_table):
+def get_weights(mutation_table, weights):
     """
     get_weights
     =================
@@ -286,6 +292,7 @@ def get_weights(mutation_table):
     Parameters:
     -----------
     1) mutation_table: (str) The file path to the mutation table to use to calcualte that PHRED weight 
+    2) weights:        (set) A set of weights to use definied by the user
 
     Returns:
     ++++++++
@@ -332,52 +339,64 @@ def get_weights(mutation_table):
 
     weights_dict = defaultdict(lambda: (defaultdict(float)))
 
-    print("\n\tPHRED WEIGHTS:")
-    print("\t==============")
-    print("\n\t SpliceAI_Ref\tPHRED Weight")
-    print("\t ------------\t------------")
+    if "PHRED" in weights:
+        print("\n\tPHRED WEIGHTS:")
+        print("\t==============")
+        print("\n\t SpliceAI_Ref\tPHRED Weight")
+        print("\t ------------\t------------")
     for row in by_ref_counts.itertuples():
         
-        print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.PHRED_Weight))
+        if "PHRED" in weights:
+            print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.PHRED_Weight))
+
         weights_dict["PHRED"]["{}_{}".format(row.delta_score_bin, row.ref)] = row.PHRED_Weight
 
 
     ## ! - marginal proportion 
     by_ref_counts["One_min_proportion"] = 1 - by_ref_counts.ref_marginal_proportion
 
-    print("\n\t1 - proportion Weights:")
-    print("\t=======================")
-    print("\n\t SpliceAI_Ref\t1 - Proportion")
-    print("\t ------------\t--------------")
+    if "One_minus_proportion" in weights:
+        print("\n\t1 - proportion Weights:")
+        print("\t=======================")
+        print("\n\t SpliceAI_Ref\t1 - Proportion")
+        print("\t ------------\t--------------")
     for row in by_ref_counts.itertuples():
         
-        print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.One_min_proportion))
+        if "One_minus_proportion" in weights:
+            print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.One_min_proportion))
+
         weights_dict["One_minus_proportion"]["{}_{}".format(row.delta_score_bin, row.ref)] = row.One_min_proportion
 
 
     ## 1 / marginal proportion 
     by_ref_counts["One_over_proportion"] = 1/by_ref_counts.ref_marginal_proportion
 
-    print("\n\t1 / proportion Weights:")
-    print("\t=======================")
-    print("\n\t SpliceAI_Ref\t1 / Proportion")
-    print("\t ------------\t--------------")
+    if "One_over_proportion" in weights:
+        print("\n\t1 / proportion Weights:")
+        print("\t=======================")
+        print("\n\t SpliceAI_Ref\t1 / Proportion")
+        print("\t ------------\t--------------")
     for row in by_ref_counts.itertuples():
         
-        print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.One_over_proportion))
+        if "One_over_proportion" in weights:
+            print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.One_over_proportion))
+            
         weights_dict["One_over_proportion"]["{}_{}".format(row.delta_score_bin, row.ref)] = row.One_over_proportion
 
     ## 1 / mutation rate
     by_ref_counts["mutation_rate"] = by_ref_counts.non_zerotons / by_ref_counts.total
     by_ref_counts["One_over_mutation_rate"] = 1 / by_ref_counts.mutation_rate
 
-    print("\n\t1 / mutation rate Weights:")
-    print("\t==========================")
-    print("\n\t SpliceAI_Ref\t1 / MutationRate")
-    print("\t ------------\t----------------")
+    if "One_over_mutation_rate" in weights:
+        print("\n\t1 / mutation rate Weights:")
+        print("\t==========================")
+        print("\n\t SpliceAI_Ref\t1 / MutationRate")
+        print("\t ------------\t----------------")
     for row in by_ref_counts.itertuples():
         
-        print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.One_over_mutation_rate))
+        if "One_over_mutation_rate" in weights:
+            print("\t {}_{}:\t{}".format(row.delta_score_bin, row.ref, row.One_over_mutation_rate))
+
         weights_dict["One_over_mutation_rate"]["{}_{}".format(row.delta_score_bin, row.ref)] = row.One_over_mutation_rate
 
 
@@ -395,6 +414,8 @@ def constraint_scores(parser, args):
     print("\t* ConSplice - O/E and Percentile Scoring *")
     print("\t******************************************\n\n")
 
+    ## Remove non-unique items 
+    args.weights = [x for x in set(args.weights)]
 
     print(("\nInput Arguments:"
            "\n================"
@@ -406,6 +427,7 @@ def constraint_scores(parser, args):
            "\n - remove-duplicate:          {}"
            "\n - pct-col-name:              {}"
            "\n - sort-by-pos:               {}"
+           "\n - weights:                   {}"
            "\n - spliceai-score-type:       {}"
 
            "\n"
@@ -417,10 +439,10 @@ def constraint_scores(parser, args):
                     args.remove_duplicate,
                     args.pct_col_name,
                     "Output will be sorted by genomic positions" if args.sort_by_pos else "Output will be sorted by increasing percentile",
+                    ", ".join(args.weights),
                     args.spliceai_score_type,
                     )
     )
-
 
     ## Load global config
     config_dict = load_config(args.config_path)
@@ -440,13 +462,18 @@ def constraint_scores(parser, args):
 
     set_global_vars()
 
+    ## Set v.
+    user_weights = set(args.weights)
+    oe_cols = [o_over_e_col[i] for i,x in enumerate(allowed_weight_classes) if x in user_weights ]
+
+
     print("\n  SpliceAI score bins:\n  --------------------\n\t- {}".format("\n\t- ".join(delta_score_bins)))
 
     ## Get different weights 
-    print("\nCalculating  weights to use for O/E scoring")
+    print("\nCalculating weights to use for O/E scoring")
     print("\n  NOTE: Only calculated from the zeroton model")
     
-    weights_dict = get_weights(args.substitution_matrix)
+    weights_dict = get_weights(args.substitution_matrix, user_weights)
 
     ## load the O and E Score file into a pandas data frame
     print("\nReading data from: {}".format(args.o_and_e_scores))
@@ -495,7 +522,8 @@ def constraint_scores(parser, args):
                            expected_column_suffix = "zeroton_expected", 
                            one_exon_mean = 50000,
                            weight_dict = weights_dict, 
-                           col_list = o_over_e_col)
+                           col_list = oe_cols,
+                           weights = user_weights)
 
         ## Add scores to score_dict. Only include the score columns
         dict_key = "{}:{}-{}:{}".format(line_dict["chrom"],
@@ -503,7 +531,7 @@ def constraint_scores(parser, args):
                                         line_dict["region_end"] if "region_end" in line_dict else line_dict["txEnd"],
                                         line_dict["gene_id"]) 
 
-        score_dict[dict_key] = {key:value for key,value in line_dict.items() if key in o_over_e_col}
+        score_dict[dict_key] = {key:value for key,value in line_dict.items() if key in oe_cols}
 
         good_keys.add(dict_key)
 
@@ -517,7 +545,7 @@ def constraint_scores(parser, args):
     o_and_e_df = pd.DataFrame.from_dict(score_dict, orient="index")
     
     ## Re-order columns
-    o_and_e_df = o_and_e_df[o_over_e_col]
+    o_and_e_df = o_and_e_df[oe_cols]
 
     del score_dict
 
@@ -525,49 +553,65 @@ def constraint_scores(parser, args):
     ## Calculate Percentile Score
     print("\nTransforming O/E scores into percentiles")
 
-    print("\n\tunweighted")
-    o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
-                                               score_column = "Unweighted_O_over_E", 
-                                               percentile_column_name = "Unweighted_%s" %args.pct_col_name,
-                                               invert_percentiles = True)
+    pctl_cols = []
 
-    print("\n\tlinear")
-    o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
-                                               score_column = "Linear_Weighted_O_over_E", 
-                                               percentile_column_name = "Linear_weighted_%s" %args.pct_col_name,
-                                               invert_percentiles = True)
+    if "unweighted" in user_weights: 
+        print("\n\tunweighted")
+        o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
+                                                   score_column = "Unweighted_O_over_E", 
+                                                   percentile_column_name = "Unweighted_%s" %args.pct_col_name,
+                                                   invert_percentiles = True)
 
-    print("\n\tPHRED")
-    o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
-                                               score_column = "PHRED_Weighted_O_over_E", 
-                                               percentile_column_name = "PHRED_weighted_%s" %args.pct_col_name,
-                                               invert_percentiles = True)
+        pctl_cols.append("Unweighted_%s" %args.pct_col_name) 
 
-    print("\n\t1 - Proportion")
-    o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
-                                               score_column = "One_minus_prop_Weighted_O_over_E", 
-                                               percentile_column_name = "one_minus_prop_weighted_%s" %args.pct_col_name,
-                                               invert_percentiles = True)
+    
+    if "linear" in user_weights: 
+        print("\n\tlinear")
+        o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
+                                                   score_column = "Linear_Weighted_O_over_E", 
+                                                   percentile_column_name = "Linear_weighted_%s" %args.pct_col_name,
+                                                   invert_percentiles = True)
 
-    print("\n\t1 / Proportion")
-    o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
-                                               score_column = "One_over_prop_Weighted_O_over_E", 
-                                               percentile_column_name = "one_over_prop_weighted_%s" %args.pct_col_name,
-                                               invert_percentiles = True)
-
-    print("\n\t1 / Mutation Rate")
-    o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
-                                               score_column = "One_over_mr_Weighted_O_over_E", 
-                                               percentile_column_name = "one_over_mr_weighted_%s" %args.pct_col_name,
-                                               invert_percentiles = True)
+        pctl_cols.append("Linear_weighted_%s" %args.pct_col_name) 
 
 
-    pctl_cols = ["Unweighted_%s" %args.pct_col_name, 
-                "Linear_weighted_%s" %args.pct_col_name, 
-                "PHRED_weighted_%s" %args.pct_col_name, 
-                "one_minus_prop_weighted_%s" %args.pct_col_name,
-                "one_over_prop_weighted_%s" %args.pct_col_name,
-                "one_over_mr_weighted_%s" %args.pct_col_name]
+    if "PHRED" in user_weights: 
+        print("\n\tPHRED")
+        o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
+                                                   score_column = "PHRED_Weighted_O_over_E", 
+                                                   percentile_column_name = "PHRED_weighted_%s" %args.pct_col_name,
+                                                   invert_percentiles = True)
+
+        pctl_cols.append("PHRED_weighted_%s" %args.pct_col_name) 
+
+
+    if "One_minus_proportion" in user_weights: 
+        print("\n\t1 - Proportion")
+        o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
+                                                   score_column = "One_minus_prop_Weighted_O_over_E", 
+                                                   percentile_column_name = "one_minus_prop_weighted_%s" %args.pct_col_name,
+                                                   invert_percentiles = True)
+
+        pctl_cols.append("one_minus_prop_weighted_%s" %args.pct_col_name)
+
+
+    if "One_over_proportion" in user_weights: 
+        print("\n\t1 / Proportion")
+        o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
+                                                   score_column = "One_over_prop_Weighted_O_over_E", 
+                                                   percentile_column_name = "one_over_prop_weighted_%s" %args.pct_col_name,
+                                                   invert_percentiles = True)
+
+        pctl_cols.append("one_over_prop_weighted_%s" %args.pct_col_name)
+
+    if "One_over_mutation_rate" in user_weights: 
+        print("\n\t1 / Mutation Rate")
+        o_and_e_df = convert_scores_to_percentiles(query_df = o_and_e_df, 
+                                                   score_column = "One_over_mr_Weighted_O_over_E", 
+                                                   percentile_column_name = "one_over_mr_weighted_%s" %args.pct_col_name,
+                                                   invert_percentiles = True)
+
+        pctl_cols.append("one_over_mr_weighted_%s" %args.pct_col_name)
 
 
     ## Convert all values to strings
@@ -595,7 +639,8 @@ def constraint_scores(parser, args):
             
             if line[0] == "#":
                 header = line.strip().replace("#","").split("\t")
-                out.write("#" + "\t".join(header + o_over_e_col + pctl_cols) + "\n")  
+                
+                out.write("#" + "\t".join(header + oe_cols + pctl_cols) + "\n")  
                 continue
 
             line_list = line.strip().split("\t")
