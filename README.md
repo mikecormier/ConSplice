@@ -59,22 +59,25 @@ Data recipes can be found in the `data_recipes` directory of this repository.
 ```
 consplice -h
 
+
     =====================================================
     || ConSplice-CLI: The CLI to the ConSplice project ||
     =====================================================
 
     (1) Score/Annotate variants using the ConSpliceML model to identify potential pathogenic clinically relevant alternative splicing variants.
-    (2) Train a Random Forest model for deleterious splicing prediction and interpritation utilizing the constrained splicing model.
+    (2) Train a Random Forest model for deleterious splicing prediction and interpretation utilizing the constrained splicing model.
     (3) Generate genic or regional splicing constraint profiles.
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         Installed ConSplice CLI Version
   --config-path CONFIG_PATH
-                        (constraint subcommand only) File path to the new ConSplice config yaml file. By default, ConSplice CLI will use the default ConSplice config.yml file
+                        (constraint subcommand only) File path to the new ConSplice config yaml file. By default, ConSplice CLI will use the
+                        default ConSplice config.yml file
 
 Main Commands:
   {ML,constraint}
     ML                  ConSpliceML - Score variants with ConSpliceML or train a new ConSpliceML model
     constraint          Generate genic or regional splicing constraint profiles
+
 ```
