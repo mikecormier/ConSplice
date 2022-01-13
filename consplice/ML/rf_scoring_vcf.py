@@ -58,12 +58,6 @@ def add_ml_scoring_vcf(sub_p):
         help = "(Required) A file that contains mappings between a canonical gene symbol to alternative gene symbols. NOTE: The file needs to have a header!. This script is set up to use the HGNC protein-coding gene mapping file can be found in the ConSplice GitHub repo: https://github.com/mikecormier/ConSplice"  
     )
 
-    req.add_argument(
-        "--ml-model",
-        metavar = "ConSpliceML Model",
-        required = True,
-        help = "(Required) The path to the directory that contains the ConSpliceML Model."
-    )
 
     p.add_argument(
         "--out-type",
@@ -79,6 +73,13 @@ def add_ml_scoring_vcf(sub_p):
         default = 3,
         type = int,
         help = "The number of CPUs to use for multi-threading during vcf parsing. (Default = 3)"
+    )
+
+    p.add_argument(
+        "--ml-model",
+        metavar = "ConSpliceML Model",
+        default = None,
+        help = "(Optional) The path to the directory that contains the ConSpliceML Model. If not specified, the ConSpliceML model from the config path will be used."
     )
 
 
@@ -124,9 +125,15 @@ def rf_score_vcf(parser, args):
         print("\n**Warning** Too many CPUs designated. Number of CPUs will be set to {}".format( multiprocessing.cpu_count() if multiprocessing.cpu_count() > 0 else 1))  
         ncpus = multiprocessing.cpu_count() if multiprocessing.cpu_count()  > 0 else 1
 
+    args.base_config = os.path.abspath(args.base_config)
+
+    if args.ml_model is None:
+        args.ml_model = os.path.join(args.base_config,"ConSpliceML_Model")
+
 
     print(("\nInput Arguments:"
            "\n================"
+           "\n - config-path:           {}"
            "\n - vcf-file:              {}"
            "\n - output-file:           {}"
            "\n - alt-gene-symbol:       {}"
@@ -134,7 +141,8 @@ def rf_score_vcf(parser, args):
            "\n - out-type:              {}"
            "\n - n-cpu:                 {}"
            "\n"
-           ).format(args.vcf_file, 
+           ).format(args.base_config,
+                    args.vcf_file, 
                     outfile,
                     args.alt_gene_symbol,
                     args.ml_model, 
