@@ -1,0 +1,17 @@
+Benign dataset: benign.combined.txt
+Date Created: 11-14-2021
+Feature Order:
+- ConSplice
+- SpliceAI
+- SQUIRLS
+Features:
+  ConSplice: 50bp_ConSplice
+  SQUIRLS: MAX_SQUIRLS
+  SpliceAI: MAX_SpliceAI
+N Decision Trees: 1000
+N benign samples: 48978
+N patho samples: 18317
+Patho dataset: hgmd.pathogenic.dm.splice_altering.txt
+Random State: 156498
+Saved Model: trained_ConSpliceML.rf
+Saved Path: /ConSplice/config/ConSpliceML_Model/trained_ConSpliceML.rf
