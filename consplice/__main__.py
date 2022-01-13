@@ -55,6 +55,12 @@ def main(args=None):
         help = "(constraint subcommand only) File path to the new ConSplice config yaml file. By default, ConSplice CLI will use the default ConSplice config.yml file",
     )
 
+    parser.add_argument(
+        "--base-config",
+        default = os.path.join(os.path.dirname(str(__cur_path__)), "../config/"),
+        help = argparse.SUPPRESS,
+    )
+
     ## 1st lay sub command
     sub = parser.add_subparsers(title="Main Commands", dest="command")
     sub.required = True
