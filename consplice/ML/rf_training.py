@@ -216,7 +216,7 @@ def rf_training(parser, args):
             print("\n\tThe output directory '{}' exists. The model will be written to this directory. Any previous model in this directory will be overwritten".format(output_dir))
 
     ## Save Random Forest Model 
-    joblib.dump(rf, os.path.join(output_dir,trained_model))
+    joblib.dump(rf, os.path.join(output_dir,trained_model), compress = "zlib")
 
     ## Save meta info to yaml file in the Model directory 
     info_dict = {"Features":{"ConSplice":args.consplice_col,"SpliceAI":args.spliceai_col,"SQUIRLS":args.squirls_col},
