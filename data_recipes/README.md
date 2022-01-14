@@ -1,6 +1,29 @@
-# Additional Data Recipes
+# ConSplice Data Recipes
 
 These recipes represent the additional data recipe for data curation when such data recipes don't exist in GGD and the data is not explicitly available from another source
+
+
+## ConSplice Data requirements
+
+ConSplice requires the following data to calcualte constraint. 
+
+| Data                                            | Required for ConSplice | Required for ConSpliceML | Source           |
+| -----                                           | ---------------------- | ------------------------ | ------           |
+| gnomAD vcf                                      |        YES             |          NO              | See recipe below |
+| gnomAD Coverage                                 |        YES             |          NO              | See recipe below |
+| SpliceAI                                        |        YES             |  YES - score required    | See recipe below |
+| SQUIRLS                                         |        NO              |  YES - score required    | See recipe below |
+| Alternative Gene Names                          |        YES             |          YES             | See recipe below |
+| grch38-reference-genome-gencode-v1              |        YES             |          NO              | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-reference-genome-gencode-v1/README.html) |
+| grch38-canonical-transcript-features-gencode-v1 |        YES             |          NO              | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-canonical-transcript-features-gencode-v1/README.html) |
+| grch38-segmental-dups-ucsc-v1                   |        YES             |          NO              | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-segmental-dups-ucsc-v1/README.html) |
+| grch38-self-chain-ucsc-v1                       |        YES             |          NO              | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-self-chain-ucsc-v1/README.html) |
+| HGMD deletrious splicing truth set              |        NO              |          YES             | see recipe below |
+| Benign Truth set                                |        NO              |          YES             | see recipe below |
+
+
+
+`Yes - score required` indicates that the score is needed but that module does not use the score from the primary data source. For example, ConSpliceML requires SpliceAI scores to be annotated into the vcf file but does not use the scores from the primary SpliceAI file. 
 
 
 ## Data Recipes:
