@@ -48,7 +48,7 @@ Both SpliceAI and SQUIRLS are used to support alternative splicing predictions, 
 
 ConSplice requires multiple sources of data including gnomAD, SpliceAI, GENCODE, and others. Data curation scripts called *Data Recipes* have been created for transparency and reproducability. 
 
-Data recipes can be found in the `data_recipes` directory of this repository. 
+Data recipes can be found in the [data_recipes](https://github.com/mikecormier/ConSplice/tree/main/data_recipes) directory of this repository. 
 
 > **_NOTE:_** The data requirements outlined in the `data_recipes` directory, or similar data, is required prior to running the ConSplice CLI. 
 
