@@ -20,8 +20,8 @@ ConSplice requires the following data to calculate constraint.
 | grch38-canonical-transcript-features-gencode-v1 |        YES             |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-canonical-transcript-features-gencode-v1/README.html) |
 | grch38-segmental-dups-ucsc-v1                   |        YES             |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-segmental-dups-ucsc-v1/README.html) |
 | grch38-self-chain-ucsc-v1                       |        YES             |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-self-chain-ucsc-v1/README.html) |
-| HGMD deleterious splicing truth set              |        NO              |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
-| Benign Truth set                                |        NO              |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
+| Pathogenic truth set                            |        NO              |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
+| Benign truth set                                |        NO              |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
 
 
 
