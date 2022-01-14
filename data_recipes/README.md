@@ -156,7 +156,7 @@ ConSpliceML can be run once SQUIRLS has been downloaded and SQUIRLS has scored a
 
 ### Truth Sets
 
-[how to get the data, if there is a paper associated with the data, how to filter the data, etc.]
+Truth sets used to test ConSplice and ConSpliceML which should be filtered out of the gnomAD vcf
 
 #### Pathogenic truth set
 
