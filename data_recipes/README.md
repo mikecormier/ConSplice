@@ -110,12 +110,15 @@ This recipe downloads and formats the alternative gene symbol file for use with 
 
 
 
-## GGD Data Recipes
+
+## External data files
+
+### GGD Data Recipes
 
 All GGD data packages used by ConSplice are available through [GGD](https://gogetdata.github.io/). The GGD cli should be used to download and use these data files.
 
 
-### GGD recipe list:
+#### GGD recipe list:
 
   - `grch38-chrom-mapping-ucsc2ensembl-ncbi-v1`  (This recipe is used to support the processing of other recipes listed above)
 
@@ -131,7 +134,7 @@ All GGD data packages used by ConSplice are available through [GGD](https://goge
 
 
 
-## SpliceAI 
+### SpliceAI 
 
 ConSplice and ConSpliceML use the GRCh38 **RAW** SpliceAI SNV vcf file (not the masked file) named *spliceai_scores.raw.snv.hg38.vcf.gz*. 
 
@@ -142,7 +145,7 @@ Further details can be found on the [SpliceAI](https://github.com/Illumina/Splic
 > **_NOTE:_** ConSpliceML does not use these scores directly from the *spliceai_scores.raw.snv.hg38.vcf.gz* but rather uses the scores that are annotated in a vcf file for each variant. To use ConSpliceML, SpliceAI scores needed to be added to the variant file prior to running ConSpliceML 
 
 
-## SQUIRLS 
+### SQUIRLS 
 
 ConSpliceML uses the GRCh38 SQUIRLS SNV scores. SQUIRLS does not provided a pre-computed scores. Therefore, SQUIRLS needs to be run on the variant file prior to running ConSpliceML.
 
@@ -151,7 +154,7 @@ The SQUIRLS CLI can be found [here](https://squirls.readthedocs.io/en/latest/)
 ConSpliceML can be run once SQUIRLS has been downloaded and SQUIRLS has scored a vcf file. 
 
 
-## Truth Sets
+### Truth Sets
 
 [how to get the data, if there is a paper associated with the data, how to filter the data, etc.]
 
