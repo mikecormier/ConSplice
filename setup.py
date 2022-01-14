@@ -14,7 +14,7 @@ setup(
     author="Mike Cormier",
     author_email="cormiermichaelj@gmail.com",
     url="https://github.com/mikecormier/ConSplice",
-    packages=["consplice","config"],
+    packages=["consplice"],
     package_data={"":["LICENSE","README.md"]},
     package_dir={"consplice":"consplice"},
     include_package_data=True,
