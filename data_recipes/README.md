@@ -26,6 +26,7 @@ ConSplice requires the following data to calculate constraint.
 
 
 `YES - score required` indicates that the score is needed but that module does not use the score from the primary data source. For example, ConSpliceML requires SpliceAI scores to be annotated into the vcf file but does not use the scores from the primary SpliceAI file. 
+
 `YES - filtering rqeuired` indicates that the data is used directly by the model and should be used to filter other data that is used by the model. For example, pathogenic and benign variants used to test the model should be used to filter variants out of gnomAD for training the model. 
 
 ## Data Recipe Description:
