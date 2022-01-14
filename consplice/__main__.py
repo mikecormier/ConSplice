@@ -50,14 +50,14 @@ def main(args=None):
     parser.add_argument(
         "--config-path",
         default=os.path.join(
-            os.path.dirname(str(__cur_path__)), "../config/config.yml"
+            os.path.dirname(str(__cur_path__)), "config/config.yml"
         ),
         help="(constraint subcommand only) File path to the new ConSplice config yaml file. By default, ConSplice CLI will use the default ConSplice config.yml file",
     )
 
     parser.add_argument(
         "--base-config",
-        default=os.path.join(os.path.dirname(str(__cur_path__)), "../config/"),
+        default=os.path.join(os.path.dirname(str(__cur_path__)), "config/"),
         help=argparse.SUPPRESS,
     )
 
