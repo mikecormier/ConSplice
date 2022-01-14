@@ -9,24 +9,24 @@ Data not requiring a *recipe* because it is available from an external source wi
 
 ConSplice requires the following data to calculate constraint. 
 
-| Data                                            | Required for ConSplice | Required for ConSpliceML | Recipe Name                                                                                                                                | Source           |
-| -----                                           | ---------------------- | ------------------------ | -----------                                                                                                                                | ------           |
-| gnomAD vcf                                      |        YES             |          NO              | [hg38.gnomad.genomes.v3.1.1.sites.sh](https://github.com/mikecormier/ConSplice/blob/main/data_recipes/hg38.gnomad.genomes.v3.1.1.sites.sh) | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#gnomad-vcf) |
-| gnomAD Coverage                                 |        YES             |          NO              | [hg38.gnomad.v3.1.1.covearge.sh](https://github.com/mikecormier/ConSplice/blob/main/data_recipes/hg38.gnomad.v3.1.1.covearge.sh)           | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#gnomad-coverage) |
-| Alternative Gene Names                          |        YES             |          YES             | [alt_gene_names.sh](https://github.com/mikecormier/ConSplice/blob/main/data_recipes/alt_gene_names.sh) | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#alternativesynonymous-gene-names) |
-| SpliceAI                                        |        YES             |  YES - score required    | NA | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#spliceai) |
-| SQUIRLS                                         |        NO              |  YES - score required    | NA | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#squirls) |
-| grch38-reference-genome-gencode-v1              |        YES             |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-reference-genome-gencode-v1/README.html) |
-| grch38-canonical-transcript-features-gencode-v1 |        YES             |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-canonical-transcript-features-gencode-v1/README.html) |
-| grch38-segmental-dups-ucsc-v1                   |        YES             |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-segmental-dups-ucsc-v1/README.html) |
-| grch38-self-chain-ucsc-v1                       |        YES             |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-self-chain-ucsc-v1/README.html) |
-| Pathogenic truth set                            |        NO              |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
-| Benign truth set                                |        NO              |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
+| Data                                            | Required for ConSplice   | Required for ConSpliceML | Recipe Name                                                                                                                                | Source           |
+| -----                                           | ----------------------   | ------------------------ | -----------                                                                                                                                | ------           |
+| gnomAD vcf                                      |        YES               |          NO              | [hg38.gnomad.genomes.v3.1.1.sites.sh](https://github.com/mikecormier/ConSplice/blob/main/data_recipes/hg38.gnomad.genomes.v3.1.1.sites.sh) | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#gnomad-vcf) |
+| gnomAD Coverage                                 |        YES               |          NO              | [hg38.gnomad.v3.1.1.covearge.sh](https://github.com/mikecormier/ConSplice/blob/main/data_recipes/hg38.gnomad.v3.1.1.covearge.sh)           | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#gnomad-coverage) |
+| Alternative Gene Names                          |        YES               |          YES             | [alt_gene_names.sh](https://github.com/mikecormier/ConSplice/blob/main/data_recipes/alt_gene_names.sh) | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#alternativesynonymous-gene-names) |
+| SpliceAI                                        |        YES               |  YES - score required    | NA | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#spliceai) |
+| SQUIRLS                                         |        NO                |  YES - score required    | NA | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#squirls) |
+| grch38-reference-genome-gencode-v1              |        YES               |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-reference-genome-gencode-v1/README.html) |
+| grch38-canonical-transcript-features-gencode-v1 |        YES               |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-canonical-transcript-features-gencode-v1/README.html) |
+| grch38-segmental-dups-ucsc-v1                   |        YES               |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-segmental-dups-ucsc-v1/README.html) |
+| grch38-self-chain-ucsc-v1                       |        YES               |          NO              | NA | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-self-chain-ucsc-v1/README.html) |
+| Pathogenic truth set                            | YES + filtering required |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
+| Benign truth set                                | YES + filtering required |          YES             | NA | [see recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#truth-sets) |
 
 
 
-`Yes - score required` indicates that the score is needed but that module does not use the score from the primary data source. For example, ConSpliceML requires SpliceAI scores to be annotated into the vcf file but does not use the scores from the primary SpliceAI file. 
-
+`YES - score required` indicates that the score is needed but that module does not use the score from the primary data source. For example, ConSpliceML requires SpliceAI scores to be annotated into the vcf file but does not use the scores from the primary SpliceAI file. 
+`YES - filtering rqeuired` indicates that the data is used directly by the model and should be used to filter other data that is used by the model. For example, pathogenic and benign variants used to test the model should be used to filter variants out of gnomAD for training the model. 
 
 ## Data Recipe Description:
 
