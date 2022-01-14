@@ -225,10 +225,10 @@ optional arguments:
   -h, --help         show this help message and exit
 
 
+```
+
 > **_NOTE:_** `score-vcf` can be slow for a large vcf file. For your convince, a vcf file pre-computed ConSpliceML scores for simulated SNVs in protein-coding genes can be found [here](). This mitigates the need to run `score-vcf`   
 
-
-```
 
 ## Pre-computed ConSpliceML scores for SNVs in protein-coding genes
 
