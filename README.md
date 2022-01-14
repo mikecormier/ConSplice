@@ -55,14 +55,15 @@ Data recipes can be found in the `data_recipes` directory of this repository.
 
 ### Installing ConSplice
 
-*Conda is required in order to install ConSplice requirements.* 
+**Conda is required in order to install ConSplice requirements** 
 
 If not already installed, we suggest using [miniconda](https://conda.io/en/latest/miniconda.html) 
 
 Although not required, the easiest way to install the ConSplice CLI is using conda.
 
 
-Install using conda. (The example below will create a new conda environment, activate the environment, and install the ConSplice CLI into that environment)
+**Install using conda**:
+(The example below will create a new conda environment, activate the environment, and install the ConSplice CLI into that environment)
 
 ```
     ## Create a ConSplice conda environment 
@@ -78,7 +79,8 @@ Install using conda. (The example below will create a new conda environment, act
 > **_NOTE:_** The example above creates and install the ConSplice CLI into a new conda environment. You must activate the new conda environment using `conda activate <environment name>` to use ConSplice.  
 
 
-Install from GitHub. (Although you can install from GitHub, we recommend you install ConSplice using conda)
+*Install from GitHub*. 
+(Although you can install from GitHub, we recommend you install ConSplice using conda)
 
 ```
     git clone https://github.com/mikecormier/ConSplice
@@ -138,11 +140,13 @@ This subcommand provides the following options
 - `score-vcf`:           Add ConSplice scores to a vcf file
 
 A normal workflow for generating constraint profiles would 
-    1) Create a substitution matrix 
-    2) Generate observed and expected counts
-    3) Calculate O/E and Percentile scores
-    4) Extract the O/E and Percentiles scores and filter for relevant data 
-    5) Convert filtered file to bed format 
+
+  1) Create a substitution matrix 
+  2) Generate observed and expected counts
+  3) Calculate O/E and Percentile scores
+  4) Extract the O/E and Percentiles scores and filter for relevant data 
+  5) Convert filtered file to bed format 
+
 
 ```
 consplice sub-matrix <arguments>
@@ -160,7 +164,7 @@ consplice select-score <arguments>
 consplice to-bed <arguments>
 ```
 
-Once a bed file has been created, the consplice scores for a variants in a txt file, bed file, or vcf can be added using the `score-txt`, `score-bed`, or `score-vcf` commands, respectively.
+Once a bed file has been created, the consplice scores for a variants in a txt file, bed file, or vcf file can be added using the `score-txt`, `score-bed`, or `score-vcf` commands, respectively.
 
 Shown here is the constraint level help message
 ```
@@ -199,7 +203,8 @@ This subcommand provides the following options
 ConSpliceML comes with a pre-trained ConSpliceML model when installed. Therefore, unless the need for training a new model arises, the most common command used 
 with the ML subcommand is `score-vcf`. 
 
-> **_NOTE:_** `score-vcf` can be slow for a large vcf file. For your convince, a vcf file pre-computed ConSpliceML scores for simulated SNVs in protein-coding genes can be found [here](). This mitigates the need to run `score-vcf`   
+> **_NOTE:_** In order to score a vcf file with ConSpliceML, the vcf file must first have SpliceAI, SQURILS, and ConSplice annotations for each variant. ConSpliceML cannot score a vcf file without these annotations   
+
 
 Shown here is the ML level help message
 ```
@@ -218,6 +223,10 @@ positional arguments:
 
 optional arguments:
   -h, --help         show this help message and exit
+
+
+> **_NOTE:_** `score-vcf` can be slow for a large vcf file. For your convince, a vcf file pre-computed ConSpliceML scores for simulated SNVs in protein-coding genes can be found [here](). This mitigates the need to run `score-vcf`   
+
 
 ```
 
