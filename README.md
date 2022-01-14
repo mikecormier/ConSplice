@@ -3,7 +3,7 @@
 [![python-version](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![Anaconda-Server Badge](https://anaconda.org/bioconda/ggd/badges/installer/conda.svg)](https://anaconda.org/bioconda/ConSplice/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![latest-Release Badge](https://img.shields.io/github/v/release/mikecormier/ConSplice?label=latest%20release%2Fversoin)
+![latest-Release Badge](https://img.shields.io/github/v/release/mikecormier/ConSplice?label=latest%20release%2Fversion)
 
 
 The Constrained Splicing (ConSplice) python module command line interface (CLI)
