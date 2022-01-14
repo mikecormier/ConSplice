@@ -9,11 +9,11 @@ ConSplice requires the following data to calcualte constraint.
 
 | Data                                            | Required for ConSplice | Required for ConSpliceML | Source           |
 | -----                                           | ---------------------- | ------------------------ | ------           |
-| gnomAD vcf                                      |        YES             |          NO              | See recipe below |
-| gnomAD Coverage                                 |        YES             |          NO              | See recipe below |
-| SpliceAI                                        |        YES             |  YES - score required    | See recipe below |
+| gnomAD vcf                                      |        YES             |          NO              | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#gnomad-vcf) |
+| gnomAD Coverage                                 |        YES             |          NO              | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#gnomad-coverage) |
+| SpliceAI                                        |        YES             |  YES - score required    | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#spliceai) |
 | SQUIRLS                                         |        NO              |  YES - score required    | See recipe below |
-| Alternative Gene Names                          |        YES             |          YES             | See recipe below |
+| Alternative Gene Names                          |        YES             |          YES             | [See recipe below](https://github.com/mikecormier/ConSplice/tree/main/data_recipes#alternativesynonymous-gene-names) |
 | grch38-reference-genome-gencode-v1              |        YES             |          NO              | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-reference-genome-gencode-v1/README.html) |
 | grch38-canonical-transcript-features-gencode-v1 |        YES             |          NO              | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-canonical-transcript-features-gencode-v1/README.html) |
 | grch38-segmental-dups-ucsc-v1                   |        YES             |          NO              | [GGD](https://gogetdata.github.io/recipes/genomics/Homo_sapiens/GRCh38/grch38-segmental-dups-ucsc-v1/README.html) |
