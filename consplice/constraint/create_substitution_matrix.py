@@ -16,7 +16,6 @@ import pyranges as pr
 import pysam
 from cyvcf2 import VCF
 from pyfaidx import Fasta
-from tqdm import tqdm
 
 from .utils import *
 

@@ -8,7 +8,6 @@ import pandas as pd
 from interlap import InterLap
 from scipy.stats import hmean
 from scipy.stats.mstats import gmean
-from tqdm import tqdm
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 ## Argument Parser

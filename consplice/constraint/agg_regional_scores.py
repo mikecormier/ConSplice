@@ -8,7 +8,6 @@ import pandas as pd
 from interlap import InterLap
 from scipy.stats import hmean
 from scipy.stats.mstats import gmean
-from tqdm import tqdm
 
 from .calculate_constraint_score import convert_scores_to_percentiles
 
