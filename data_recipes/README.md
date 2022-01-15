@@ -118,6 +118,7 @@ This recipe downloads and formats the alternative gene symbol file for use with 
 
 All GGD data packages used by ConSplice are available through [GGD](https://gogetdata.github.io/). The GGD cli should be used to download and use these data files.
 
+> **_NOTE:_** GGD needs to be installed by conda prior to installing GGD data packages. See [GGD Quick Start](https://gogetdata.github.io/quick-start.html) for information on how to install and setup GGD.  
 
 #### GGD recipe list:
 
