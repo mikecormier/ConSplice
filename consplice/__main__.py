@@ -142,6 +142,8 @@ def main(args=None):
         print("Base config path:", args.base_config, "\n")
         print("config path:", args.config_path, "\n")
 
+        print("consplice dir:\n\t- ", "\n\t- ".join(os.listdir(os.path.join(args.base_config,"../"))), "\n")
+
 
         ## Check that the path exists
         assert os.path.exists(args.base_config), "!!ERROR!! The base config path does not exists. Bad path = '{}'\n".format(args.base_config)
