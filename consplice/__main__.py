@@ -137,8 +137,11 @@ def main(args=None):
 
     if args.check_config_path:
 
-        print("Base Config Dir:\n", ", ".join(os.listdir(args.base_config)), "\n")
-        print("ML Model Config Dir:\n", ", ".join(os.listdir(os.path.join(args.base_config,"ConSpliceML_Model"))), "\n")
+
+
+        print("Base config path:", args.base_config, "\n")
+        print("config path:", args.config_path, "\n")
+
 
         ## Check that the path exists
         assert os.path.exists(args.base_config), "!!ERROR!! The base config path does not exists. Bad path = '{}'\n".format(args.base_config)
@@ -158,6 +161,9 @@ def main(args=None):
         assert os.path.getsize(args.config_path) > 0, "!!ERROR!! The config yaml is empty. File Size = '{}'\n".format(os.path.getsize(args.config_path))
         assert os.path.getsize(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf")), "!!ERROR!! The ML Model .rf config file is empty. File Size = '{}'\n".format(os.path.getsize(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf")))
         assert os.path.isfile(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml")), "!!ERROR!! The ML Model yaml config file is empty. File Size = '{}'\n".format(os.path.getsize(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml")))
+
+        print("Base Config Dir:\n", ", ".join(os.listdir(args.base_config)), "\n")
+        print("ML Model Config Dir:\n", ", ".join(os.listdir(os.path.join(args.base_config,"ConSpliceML_Model"))), "\n")
 
         print("\nAll config checks passed\n")
 
