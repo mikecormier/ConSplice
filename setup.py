@@ -29,7 +29,7 @@ setup(
                       "consplice/config/config.yml",
                       "consplice/ConSpliceML_Model/trained_ConSpliceML.rf",
                       "consplice/ConSpliceML_Model/training.yaml"]},
-    #include_package_data=True,
+    include_package_data=True,
     install_requires=requires,
     license="MIT",
     zip_safe=False,
