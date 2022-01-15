@@ -1,7 +1,7 @@
 # ConSplice
 
 [![python-version](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Anaconda-Server Badge](https://anaconda.org/bioconda/ggd/badges/installer/conda.svg)](https://anaconda.org/bioconda/ConSplice/)
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/consplice/badges/installer/conda.svg)](https://conda.anaconda.org/bioconda)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![latest-Release Badge](https://img.shields.io/github/v/release/mikecormier/ConSplice?label=latest%20release%2Fversion)
 
@@ -72,14 +72,14 @@ Although not required, the easiest way to install the ConSplice CLI is using con
 (The example below will create a new conda environment, activate the environment, and install the ConSplice CLI into that environment)
 
 ```
-    ## Create a ConSplice conda environment 
-    conda create --name ConSplice python=3
+## Create a ConSplice conda environment 
+conda create --name ConSplice python=3
 
-    ## Activate the ConSplice conda environment
-    conda activate ConSplice
+## Activate the ConSplice conda environment
+conda activate ConSplice
 
-    ## Install ConSplice while in the new conda environment
-    conda install -c bioconda ConSplice
+## Install ConSplice while in the new conda environment
+conda install -c bioconda consplice
 ```
 
 > **_NOTE:_** The example above creates and install the ConSplice CLI into a new conda environment. You must activate the new conda environment using `conda activate <environment name>` to use ConSplice.  
@@ -89,10 +89,10 @@ Although not required, the easiest way to install the ConSplice CLI is using con
 (Although you can install from GitHub, we recommend you install ConSplice using conda)
 
 ```
-    git clone https://github.com/mikecormier/ConSplice
-    cd ConSplice
-    conda install --file requirements.txt
-    python setup.py install
+git clone https://github.com/mikecormier/ConSplice
+cd ConSplice
+conda install --file requirements.txt
+python setup.py install
 ```
 
 
