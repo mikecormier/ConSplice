@@ -21,8 +21,8 @@ setup(
               "consplice.config.ConSpliceML_Model"],
     package_dir={"consplice":"consplice",
                  "consplice.constraint": "consplice/constraint",
-                 "consplice.ML":"consplice/ML"
-                 "consplice.config":"consplice/config"
+                 "consplice.ML":"consplice/ML",
+                 "consplice.config":"consplice/config",
                  "consplice.config.ConSpliceML_Model": "consplice/config/ConSpliceML_Model"},
     package_data={"":["LICENSE","README.md"]},
     include_package_data=True,
