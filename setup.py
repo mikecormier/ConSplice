@@ -26,9 +26,13 @@ setup(
                  "consplice.config.ConSpliceML_Model": "consplice/config/ConSpliceML_Model"},
     package_data={"":["LICENSE",
                       "README.md",
-                      "consplice/config/config.yml",
-                      "consplice/ConSpliceML_Model/trained_ConSpliceML.rf",
-                      "consplice/ConSpliceML_Model/training.yaml"]},
+                      "*.yml",
+                      "*.yaml",
+                      "*.rf"],
+                  "consplice":["config/*.yml"],
+                  "consplice/":["config/ConSpliceML_Model/*.rf",
+                                "config/ConSpliceML_Model/*.yaml"]
+                 }
     include_package_data=True,
     install_requires=requires,
     license="MIT",
