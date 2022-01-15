@@ -1,0 +1,3 @@
+include consplice/config/config.yml 
+include consplice/config/ConSpliceML_Model/trained_ConSpliceML.rf 
+include consplice/config/ConSpliceML_Model/training.yaml
