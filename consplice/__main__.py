@@ -61,9 +61,16 @@ def main(args=None):
         help=argparse.SUPPRESS,
     )
 
+    parser.add_argument(
+        "--check-config-path",
+        action="store_true",
+        help=argparse.SUPPRESS
+    )
+
+
     ## 1st lay sub command
     sub = parser.add_subparsers(title="Main Commands", dest="command")
-    sub.required = True
+    #sub.required = True
 
     ## 2nd layer sub command for ConSplice ML function
     ml = sub.add_parser(
@@ -126,8 +133,52 @@ def main(args=None):
 
     ## Initiate argparse
     args = parser.parse_args(args)
-    args.func(parser, args)
 
+
+    if args.check_config_path:
+
+        print("Base Config Dir:\n", ", ".join(os.listdir(args.base_config)), "\n")
+        print("ML Model Config Dir:\n", ", ".join(os.listdir(os.path.join(args.base_config,"ConSpliceML_Model"))), "\n")
+
+        ## Check that the path exists
+        assert os.path.exists(args.base_config), "!!ERROR!! The base config path does not exists. Bad path = '{}'\n".format(args.base_config)
+        assert os.path.exists(args.config_path), "!!ERROR!! The config yaml path does not exists. Bad path = '{}'\n".format(args.config_path)
+        assert os.path.exists(os.path.join(args.base_config,"ConSpliceML_Model")), "!!ERROR!! The ML Model config path does not exists. Bad path = '{}'\n".format(os.path.join(args.base_config,"ConSpliceML_Model"))
+        assert os.path.exists(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf")), "!!ERROR!! The ML Model .rf config path does not exists. Bad path = '{}'\n".format(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf"))
+        assert os.path.exists(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml")), "!!ERROR!! The ML Model yaml config path does not exists. Bad path = '{}'\n".format(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml"))
+
+        ## Check that the file or dir is a file or dir
+        assert os.path.isdir(args.base_config), "!!ERROR!! The base config is not a directory. Bad path = '{}'\n".format(args.base_config)
+        assert os.path.isfile(args.config_path), "!!ERROR!! The config yaml is not a file. Bad path = '{}'\n".format(args.config_path)
+        assert os.path.isdir(os.path.join(args.base_config,"ConSpliceML_Model")), "!!ERROR!! The ML Model config is not a directory. Bad path = '{}'\n".format(os.path.join(args.base_config,"ConSpliceML_Model"))
+        assert os.path.isfile(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf")), "!!ERROR!! The ML Model .rf config is not a file. Bad path = '{}'\n".format(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf"))
+        assert os.path.isfile(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml")), "!!ERROR!! The ML Model yaml config is not a file. Bad path = '{}'\n".format(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml"))
+
+        ## Check that for non-empty files
+        assert os.path.getsize(args.config_path) > 0, "!!ERROR!! The config yaml is empty. File Size = '{}'\n".format(os.path.getsize(args.config_path))
+        assert os.path.getsize(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf")), "!!ERROR!! The ML Model .rf config file is empty. File Size = '{}'\n".format(os.path.getsize(os.path.join(args.base_config,"ConSpliceML_Model/trained_ConSpliceML.rf")))
+        assert os.path.isfile(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml")), "!!ERROR!! The ML Model yaml config file is empty. File Size = '{}'\n".format(os.path.getsize(os.path.join(args.base_config,"ConSpliceML_Model/training.yaml")))
+
+        print("\nAll config checks passed\n")
+
+    elif args.command is None:
+        
+        print("\n!!ERROR!! Command not found. Please use the 'constraint', 'ML', '-h', or '--version' subcommand\n")
+
+    else:
+
+        try:
+            args.func(parser, args)
+
+        except AttributeError as e:
+
+            if "'Namespace' object has no attribute 'func'" in str(e):
+                print("\nUse '-h' to see the agrument options for this subcommand\n")
+
+            else:
+                print(e)
+
+        
 
 if __name__ == "__main__":
     sys.exit(main() or 0)
