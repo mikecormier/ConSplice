@@ -242,6 +242,6 @@ We provided a vcf file with pre-computed ConSpliceML scores for simulated SNVs i
 
 This file contains a SpliceAI score, a SQUIRLS score, a ConSplice Score, and a ConSpliceML score for each variant. SpliceAI, SQURILS, and ConSplice are included as a reference for the scores used to calculate the ConSpliceML score.
 
-This vcf file can be found [here]().
+This vcf file can be found [here](https://home.chpc.utah.edu/~u1138933/ConSplice/scored_vcf/).
 
 
