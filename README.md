@@ -1,7 +1,7 @@
 # ConSplice
 
 [![python-version](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Anaconda-Server Badge](https://anaconda.org/bioconda/consplice/badges/installer/conda.svg)](https://conda.anaconda.org/bioconda)
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/consplice/badges/version.svg)](https://anaconda.org/bioconda/consplice)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![latest-Release Badge](https://img.shields.io/github/v/release/mikecormier/ConSplice?label=latest%20release%2Fversion)
 
@@ -61,39 +61,156 @@ Data recipes can be found in the [data_recipes](https://github.com/mikecormier/C
 
 ### Installing ConSplice
 
-**Conda is required in order to install ConSplice requirements** 
+#### Conda/Mamba is required in order to install ConSplice requirements
 
-If not already installed, we suggest using [miniconda](https://conda.io/en/latest/miniconda.html) 
+We suggest using [mamba](https://github.com/mamba-org/mamba) over conda as it provides improvements to the conda infrastructure while still utilizing the conda framework. 
 
-Although not required, the easiest way to install the ConSplice CLI is using conda.
+Mamba can be installed into the base environment of a current conda installation: `conda install -c conda-forge mamba` 
+
+However, we suggest that **mambforge** be installed in place of conda.
+
+Mambaforge will set up a normal conda environment with mamba ready to go. Therefore you can use both mamba and conda interchangeably. That means any conda command,
+such as `install`, `search`, `uninstall`, `create`, `info`, etc. you can use with mamba. 
+
+**You can install mambaforge [here](https://github.com/conda-forge/miniforge#mambaforge).** 
+
+If you would still prefer to use conda, we suggest using [miniconda](https://conda.io/en/latest/miniconda.html). 
 
 
-**Install using conda**:
-(The example below will create a new conda environment, activate the environment, and install the ConSplice CLI into that environment)
+#### Conda/Mamba versions
+
+The installation of the ConSplice CLI was recently tested with the latest versions of conda and mamba. 
+  - conda v4.14.0 
+  - mamba v0.25.0
+
+We suggest using these or newer versions of conda and mamba.
+
+
+#### Conda/Mamba Channels
+
+You will need to add a few conda channels to your configurations before you can install ConSplice. 
+
+Use the following commands to add the required channels. 
 
 ```
-## Create a ConSplice conda environment 
-conda create --name ConSplice python=3
+conda config --add channels defaults
+conda config --add channels ggd-genomics
+conda config --add channels bioconda
+conda config --add channels conda-forge
+```
+
+#### Installing on different platforms
+
+The ConSplice CLI is a `noarch` python package, which means it is architecture free. This means, in theory, that it can be installed on any system. 
+
+However, we have seen a few problems with users trying to install ConSplice onto newer OSX systems using the **Apple M1 Silicon chips**. This is because some of the 
+packages ConSplice depends on are not supported by the new ARM64 chip architecture. 
+
+Luckily, the M1 chips can natively run the older x86 infrastructure used by the Intel chips. Additionally, conda/mamba provides a way to install x86 packages onto an ARM64 M1 Silicon Mac. You just need to tell conda which architecture to use. 
+
+Specifically, you will add a conda environment variable to the installation instructions. This is how you tell conda to use the osx x86 architecture:
+`CONDA_SUBDIR=osx-64`
+
+In the following examples, we show how to install ConSplice onto your system, including onto an M1 Silicon chip Mac with an ARM64 architecture. 
+
+
+#### Installation Examples:
+
+**Install using mamba**:
+
+(The example below will create a new conda/mamba environment with python3 and the ConSplice CLI already installed in it. It will then activate the environment so the ConSplice CLI can be used.)
+
+```
+## Create a ConSplice conda environment with python3 and consplice packages installed
+mamba create --name ConSplice python=3 consplice 
 
 ## Activate the ConSplice conda environment
-conda activate ConSplice
+mamba activate ConSplice
+```
+
+(The example below will create a new conda environment, activate the environment, and install the ConSplice CLI into that environment)
+```
+## Create a ConSplice conda environment with python3 installed
+mamba create --name ConSplice python=3  
+
+## Activate the ConSplice conda environment
+mamba activate ConSplice
 
 ## Install ConSplice while in the new conda environment
-conda install -c bioconda consplice
+mamba install -c bioconda consplice
 ```
 
-> **_NOTE:_** The example above creates and install the ConSplice CLI into a new conda environment. You must activate the new conda environment using `conda activate <environment name>` to use ConSplice.  
+
+> **_NOTE:_** The example above creates and installs the ConSplice CLI into a new conda environment. You must activate the new conda environment using `conda activate <environment name>` to use ConSplice.  
 
 
-*Install from GitHub*. 
-(Although you can install from GitHub, we recommend you install ConSplice using conda)
+**Install using mamba on an M1 Mac with an ARM64 architecture**:
+
+(The example below will create a new conda/mamba environment with python3 and the ConSplice CLI already installed in it using the x86 architecture on an M1 Mac with an ARM64 architecture. It will then activate the environment so the ConSplice CLI can be used and set the conda config to use the x86 architecture.)
 
 ```
+## Create a ConSplice conda environment with python3 and consplice packages installed
+CONDA_SUBDIR=osx-64 mamba create --name ConSplice_x86 python=3 consplice 
+
+## Activate the ConSplice conda environment
+mamba activate ConSplice_x86
+
+mamba config --env --set subdir osx-64
+```
+
+**Install using conda**:
+
+To install with conda, you will use the exact same commands as shown above while replacing `mamba` with `conda`.
+
+
+**Install from GitHub**:
+
+(Although you can install from GitHub, we recommend you install ConSplice using conda/mamba)
+
+```
+## Clone the ConSplice GitHub repo
 git clone https://github.com/mikecormier/ConSplice
+
 cd ConSplice
-conda install --file requirements.txt
+
+## Create a ConSplice conda environment with python3 installed
+mamba create --name ConSplice python=3  
+
+## Activate the ConSplice conda environment
+mamba activate ConSplice
+
+## install the required packages
+mamba install --file requirements.txt
+
+## Install the ConSplice module
 python setup.py install
 ```
+
+**Install from GitHub on an M1 Mac with an ARM64 architecture**:
+
+(Although you can install from GitHub, we recommend you install ConSplice using conda/mamba)
+
+```
+## Clone the ConSplice GitHub repo
+git clone https://github.com/mikecormier/ConSplice
+
+cd ConSplice
+
+## Create a ConSplice conda environment with python3 installed
+CONDA_SUBDIR=osx-64 mamba create --name ConSplice_x86 python=3  
+
+## Activate the ConSplice conda environment
+mamba activate ConSplice_x86
+
+## install the required packages
+CONDA_SUBDIR=osx-64 mamba install --file requirements.txt
+
+## Install the ConSplice module
+python setup.py install
+```
+
+
+
 
 
 
