@@ -1,7 +1,7 @@
 # ConSplice
 
 [![python-version](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Anaconda-Server Badge](https://anaconda.org/bioconda/consplice/badges/installer/conda.svg)](https://conda.anaconda.org/bioconda)
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/consplice/badges/version.svg)](https://anaconda.org/bioconda/consplice)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![latest-Release Badge](https://img.shields.io/github/v/release/mikecormier/ConSplice?label=latest%20release%2Fversion)
 
