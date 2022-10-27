@@ -350,7 +350,7 @@ optional arguments:
 
 ```
 
-> **_NOTE:_** `score-vcf` can be slow for a large vcf file. For your convince, a vcf file with pre-computed ConSpliceML scores for simulated SNVs in protein-coding genes can be found [here](). This mitigates the need to run `score-vcf`   
+> **_NOTE:_** `score-vcf` can be slow for a large vcf file. For your convenience, a vcf file with pre-computed ConSpliceML scores for simulated SNVs in protein-coding genes can be found [here](https://home.chpc.utah.edu/~u1138933/ConSplice/scored_vcf/). This mitigates the need to run `score-vcf`   
 
 
 ## Pre-computed ConSpliceML scores for SNVs in protein-coding genes
